@@ -1,0 +1,385 @@
+openapi: 3.0.3
+info:
+  title: Authentication & Multi-Tenancy API
+  description: |
+    JWT-based authentication and authorization API for multi-tenant SaaS billing platform.
+    
+    ## Features
+    - User registration with role assignment (ROLE_ADMIN, ROLE_USER)
+    - Secure login with JWT token generation
+    - Multi-tenant data isolation
+    - BCrypt password encryption
+    - Comprehensive input validation
+    
+    ## Authentication
+    All authenticated endpoints require a Bearer token in the Authorization header:
+    ```
+    Authorization: Bearer <JWT_TOKEN>
+    ```
+    
+    ## Roles
+    - **ROLE_ADMIN**: SaaS platform owner with full system access (no tenant association)
+    - **ROLE_USER**: Subscriber with tenant-scoped access
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.billing.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User registration and login operations
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: |
+        Creates a new user account with the specified role and credentials.
+        
+        - For ROLE_ADMIN: tenantName is optional (admin has no tenant association)
+        - For ROLE_USER: tenantName is required (creates or associates with tenant)
+        - Email must be unique across all users
+        - Password must be at least 8 characters
+        
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              adminRegistration:
+                summary: Admin registration
+                value:
+                  email: admin@example.com
+                  password: SecurePass123
+                  role: ROLE_ADMIN
+                  firstName: John
+                  lastName: Doe
+              userRegistration:
+                summary: Subscriber registration
+                value:
+                  email: user@acme.com
+                  password: SecurePass456
+                  role: ROLE_USER
+                  tenantName: Acme Corp
+                  firstName: Jane
+                  lastName: Smith
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                expiresIn: 86400
+                role: ROLE_USER
+                tenantId: 123
+                email: user@acme.com
+        '400':
+          description: Validation error (invalid email, weak password, missing required fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidEmail:
+                  summary: Invalid email format
+                  value:
+                    timestamp: '2026-01-24T22:30:00Z'
+                    status: 400
+                    error: Bad Request
+                    message: Invalid email format
+                    path: /api/v1/auth/register
+                weakPassword:
+                  summary: Password too short
+                  value:
+                    timestamp: '2026-01-24T22:30:00Z'
+                    status: 400
+                    error: Bad Request
+                    message: Password must be between 8 and 100 characters
+                    path: /api/v1/auth/register
+                missingTenant:
+                  summary: Missing tenant for ROLE_USER
+                  value:
+                    timestamp: '2026-01-24T22:30:00Z'
+                    status: 400
+                    error: Bad Request
+                    message: Tenant name is required for ROLE_USER
+                    path: /api/v1/auth/register
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: '2026-01-24T22:30:00Z'
+                status: 409
+                error: Conflict
+                message: Email already registered
+                path: /api/v1/auth/register
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user and receive JWT token
+      description: |
+        Validates user credentials and returns a JWT token for subsequent authenticated requests.
+        
+        - Token expires after 24 hours
+        - Token contains user ID, email, role, and tenantId (for ROLE_USER)
+        - Failed login attempts do not reveal whether email or password was incorrect
+        
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@acme.com
+              password: SecurePass456
+      responses:
+        '200':
+          description: Login successful, JWT token returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                adminLogin:
+                  summary: Admin login response
+                  value:
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    expiresIn: 86400
+                    role: ROLE_ADMIN
+                    tenantId: null
+                    email: admin@example.com
+                userLogin:
+                  summary: Subscriber login response
+                  value:
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    expiresIn: 86400
+                    role: ROLE_USER
+                    tenantId: 123
+                    email: user@acme.com
+        '400':
+          description: Validation error (missing email or password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: '2026-01-24T22:30:00Z'
+                status: 400
+                error: Bad Request
+                message: Email and password are required
+                path: /api/v1/auth/login
+        '401':
+          description: Invalid credentials or account disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  summary: Wrong email or password
+                  value:
+                    timestamp: '2026-01-24T22:30:00Z'
+                    status: 401
+                    error: Unauthorized
+                    message: Invalid credentials
+                    path: /api/v1/auth/login
+                accountDisabled:
+                  summary: Account is inactive
+                  value:
+                    timestamp: '2026-01-24T22:30:00Z'
+                    status: 401
+                    error: Unauthorized
+                    message: Account is disabled
+                    path: /api/v1/auth/login
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: User's email address (must be unique)
+          example: user@acme.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 100
+          description: User's password (will be BCrypt-hashed)
+          example: SecurePass456
+        role:
+          type: string
+          enum:
+            - ROLE_ADMIN
+            - ROLE_USER
+          description: User role (ROLE_ADMIN for SaaS owner, ROLE_USER for subscriber)
+          example: ROLE_USER
+        tenantName:
+          type: string
+          maxLength: 255
+          description: Tenant/organization name (required for ROLE_USER, optional for ROLE_ADMIN)
+          example: Acme Corp
+        firstName:
+          type: string
+          maxLength: 100
+          description: User's first name (optional)
+          example: Jane
+        lastName:
+          type: string
+          maxLength: 100
+          description: User's last name (optional)
+          example: Smith
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@acme.com
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: SecurePass456
+
+    AuthResponse:
+      type: object
+      required:
+        - token
+        - expiresIn
+        - role
+        - email
+      properties:
+        token:
+          type: string
+          description: JWT access token (use in Authorization header as "Bearer <token>")
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        expiresIn:
+          type: integer
+          format: int64
+          description: Token expiration time in seconds (24 hours = 86400 seconds)
+          example: 86400
+        role:
+          type: string
+          enum:
+            - ROLE_ADMIN
+            - ROLE_USER
+          description: User's role
+          example: ROLE_USER
+        tenantId:
+          type: integer
+          format: int64
+          nullable: true
+          description: Tenant ID (null for ROLE_ADMIN, populated for ROLE_USER)
+          example: 123
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: user@acme.com
+
+    ErrorResponse:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp in ISO 8601 format
+          example: '2026-01-24T22:30:00Z'
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        error:
+          type: string
+          description: HTTP status text
+          example: Bad Request
+        message:
+          type: string
+          description: User-friendly error message
+          example: Invalid email format
+        path:
+          type: string
+          description: Request path that caused the error
+          example: /api/v1/auth/register
+        errors:
+          type: array
+          description: Detailed validation errors (optional, for 400 Bad Request)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field name that failed validation
+                example: password
+              message:
+                type: string
+                description: Validation error message
+                example: Password must be between 8 and 100 characters
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from /auth/login endpoint.
+        
+        Include in Authorization header:
+        ```
+        Authorization: Bearer <token>
+        ```
+
+security: []  # Authentication endpoints are public
