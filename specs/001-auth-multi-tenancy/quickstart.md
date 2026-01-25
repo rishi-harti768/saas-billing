@@ -21,7 +21,7 @@
 ```bash
 # Start PostgreSQL container
 docker run --name billing-postgres \
-  -e POSTGRES_DB=billing \
+  -e POSTGRES_DB=billing_db \
   -e POSTGRES_USER=billing_user \
   -e POSTGRES_PASSWORD=billing_pass \
   -p 5432:5432 \
@@ -38,9 +38,9 @@ docker ps | grep billing-postgres
 psql -U postgres
 
 -- Create database and user
-CREATE DATABASE billing;
+CREATE DATABASE billing_db;
 CREATE USER billing_user WITH PASSWORD 'billing_pass';
-GRANT ALL PRIVILEGES ON DATABASE billing TO billing_user;
+GRANT ALL PRIVILEGES ON DATABASE billing_db TO billing_user;
 ```
 
 ### 2. Generate JWT Secret
@@ -62,7 +62,7 @@ spring:
     name: billing-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/billing
+    url: jdbc:postgresql://localhost:5432/billing_db
     username: billing_user
     password: billing_pass
     driver-class-name: org.postgresql.Driver
@@ -89,7 +89,7 @@ jwt:
 # Logging
 logging:
   level:
-    com.company.billing: DEBUG
+    org.gb.billing: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
 ```
@@ -155,11 +155,12 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
+  "id": 1,
+  "email": "admin@example.com",
   "role": "ROLE_ADMIN",
   "tenantId": null,
-  "email": "admin@example.com"
+  "firstName": "John",
+  "lastName": "Doe"
 }
 ```
 
@@ -184,11 +185,12 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
+  "id": 2,
+  "email": "user@acme.com",
   "role": "ROLE_USER",
   "tenantId": 1,
-  "email": "user@acme.com"
+  "firstName": "Jane",
+  "lastName": "Smith"
 }
 ```
 
@@ -210,10 +212,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresIn": 86400,
-  "role": "ROLE_USER",
-  "tenantId": 1,
-  "email": "user@acme.com"
+  "expiresIn": 86400000
 }
 ```
 
@@ -380,7 +379,7 @@ echo $TOKEN | cut -d'.' -f2 | base64 -d | jq
 
 ```sql
 -- Connect to database
-psql -U billing_user -d billing
+psql -U billing_user -d billing_db
 
 -- View all users
 SELECT id, email, role, tenant_id, active, created_date
@@ -521,8 +520,8 @@ $env:JWT_SECRET   # Windows PowerShell
 ./mvnw flyway:clean flyway:migrate
 
 # Or drop and recreate database
-psql -U postgres -c "DROP DATABASE billing;"
-psql -U postgres -c "CREATE DATABASE billing;"
+psql -U postgres -c "DROP DATABASE billing_db;"
+psql -U postgres -c "CREATE DATABASE billing_db;"
 ./mvnw flyway:migrate
 ```
 
@@ -613,7 +612,7 @@ echo '{"email":"user@acme.com","password":"UserPass456"}' > login.json
 tail -f logs/spring-boot-application.log
 
 # Monitor database connections
-psql -U billing_user -d billing -c "SELECT count(*) FROM pg_stat_activity;"
+psql -U billing_user -d billing_db -c "SELECT count(*) FROM pg_stat_activity;"
 
 # Check JVM memory usage
 jps -l  # Find Java process ID

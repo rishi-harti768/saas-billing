@@ -1,0 +1,124 @@
+# Production Environment Configuration
+# Activate with: --spring.profiles.active=prod
+
+spring:
+  application:
+    name: billing-service
+
+  # PostgreSQL Production Database
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/billing_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # NEVER use create/update in production
+    show-sql: false # Disable SQL logging in production
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    out-of-order: false
+
+# JWT Configuration - MUST use environment variables
+jwt:
+  secret: ${JWT_SECRET} # REQUIRED - No default in production
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours default
+
+# Logging Configuration - Production Level
+logging:
+  level:
+    root: WARN
+    org.gb.billing: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/billing/application.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 1GB
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never # NEVER expose stack traces in production
+    include-exception: false
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+  http2:
+    enabled: true
+
+# Springdoc OpenAPI - Restricted in Production
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: ${SWAGGER_ENABLED:false} # Disabled by default in production
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:false} # Disabled by default in production
+  show-actuator: false
+
+# Spring Boot Actuator - Limited Exposure in Production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus # Only essential endpoints
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized # Only show details to authorized users
+      show-components: when-authorized
+  health:
+    defaults:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true # Enable Prometheus metrics
+  info:
+    env:
+      enabled: false # Don't expose environment info
+    java:
+      enabled: true
+    os:
+      enabled: false
+
+# Security Headers (additional to Spring Security defaults)
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true # Require HTTPS for cookies
+        same-site: strict
+
+# Production-specific settings
+debug: false
