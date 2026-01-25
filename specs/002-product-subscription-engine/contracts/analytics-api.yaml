@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: Subscription Analytics API
+  description: API for subscription metrics and analytics (Admin only)
+  version: 1.0.0
+  contact:
+    name: Enterprise SaaS Billing Team
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.billing.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Analytics
+    description: Subscription analytics and reporting (Admin only)
+
+paths:
+  /admin/analytics/subscriptions/by-plan:
+    get:
+      tags:
+        - Analytics
+      summary: Get subscription count by plan
+      description: Retrieve the count of active subscriptions grouped by billing plan. Admin only.
+      operationId: getSubscriptionCountByPlan
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved subscription counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionCountByPlan'
+              example:
+                - planId: 1
+                  planName: "Free"
+                  activeSubscriptions: 150
+                - planId: 2
+                  planName: "Pro"
+                  activeSubscriptions: 45
+                - planId: 3
+                  planName: "Enterprise"
+                  activeSubscriptions: 12
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/analytics/subscriptions/by-status:
+    get:
+      tags:
+        - Analytics
+      summary: Get subscription count by status
+      description: Retrieve the count of subscriptions grouped by status (ACTIVE, PAST_DUE, CANCELED). Admin only.
+      operationId: getSubscriptionCountByStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved subscription counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionCountByStatus'
+              example:
+                - status: "ACTIVE"
+                  count: 207
+                - status: "PAST_DUE"
+                  count: 15
+                - status: "CANCELED"
+                  count: 83
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/analytics/churn-rate:
+    get:
+      tags:
+        - Analytics
+      summary: Calculate churn rate
+      description: Calculate the percentage of subscriptions that were canceled during a specified period. Admin only.
+      operationId: getChurnRate
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for churn calculation (ISO 8601 format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-01-01"
+        - name: endDate
+          in: query
+          description: End date for churn calculation (ISO 8601 format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-01-31"
+      responses:
+        '200':
+          description: Successfully calculated churn rate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChurnRateResponse'
+              example:
+                startDate: "2026-01-01"
+                endDate: "2026-01-31"
+                totalSubscriptions: 305
+                canceledSubscriptions: 18
+                churnRate: 5.9
+                churnRatePercentage: "5.90%"
+        '400':
+          description: Invalid date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "startDate must be before endDate"
+                path: "/api/v1/admin/analytics/churn-rate"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/analytics/subscription-growth:
+    get:
+      tags:
+        - Analytics
+      summary: Get subscription growth trends
+      description: Retrieve time-series data showing new subscriptions, cancellations, and net growth over time. Admin only.
+      operationId: getSubscriptionGrowth
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Start date for growth analysis (ISO 8601 format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2025-07-01"
+        - name: endDate
+          in: query
+          description: End date for growth analysis (ISO 8601 format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-01-31"
+        - name: granularity
+          in: query
+          description: Time granularity for grouping (DAILY, WEEKLY, MONTHLY)
+          required: false
+          schema:
+            type: string
+            enum: [DAILY, WEEKLY, MONTHLY]
+            default: MONTHLY
+          example: "MONTHLY"
+      responses:
+        '200':
+          description: Successfully retrieved growth trends
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionGrowthData'
+              example:
+                - period: "2025-07"
+                  newSubscriptions: 45
+                  canceledSubscriptions: 8
+                  netGrowth: 37
+                  totalActive: 182
+                - period: "2025-08"
+                  newSubscriptions: 52
+                  canceledSubscriptions: 12
+                  netGrowth: 40
+                  totalActive: 222
+                - period: "2025-09"
+                  newSubscriptions: 38
+                  canceledSubscriptions: 10
+                  netGrowth: 28
+                  totalActive: 250
+        '400':
+          description: Invalid date range or granularity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/analytics/revenue-summary:
+    get:
+      tags:
+        - Analytics
+      summary: Get revenue summary
+      description: Calculate total revenue and Monthly Recurring Revenue (MRR) from active subscriptions. Admin only.
+      operationId: getRevenueSummary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully calculated revenue summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueSummaryResponse'
+              example:
+                totalActiveSubscriptions: 207
+                monthlyRecurringRevenue: 4523.85
+                annualRecurringRevenue: 54286.20
+                averageRevenuePerUser: 21.85
+                revenueByPlan:
+                  - planName: "Free"
+                    subscriptions: 150
+                    monthlyRevenue: 0.00
+                  - planName: "Pro"
+                    subscriptions: 45
+                    monthlyRevenue: 1349.55
+                  - planName: "Enterprise"
+                    subscriptions: 12
+                    monthlyRevenue: 3174.30
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from /api/v1/auth/login (requires ROLE_ADMIN)
+
+  schemas:
+    SubscriptionCountByPlan:
+      type: object
+      properties:
+        planId:
+          type: integer
+          format: int64
+          description: Plan ID
+          example: 2
+        planName:
+          type: string
+          description: Plan name
+          example: "Pro"
+        activeSubscriptions:
+          type: integer
+          description: Number of active subscriptions
+          example: 45
+
+    SubscriptionCountByStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, PAST_DUE, CANCELED]
+          description: Subscription status
+          example: "ACTIVE"
+        count:
+          type: integer
+          description: Number of subscriptions with this status
+          example: 207
+
+    ChurnRateResponse:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: Start date of analysis period
+          example: "2026-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date of analysis period
+          example: "2026-01-31"
+        totalSubscriptions:
+          type: integer
+          description: Total subscriptions during period
+          example: 305
+        canceledSubscriptions:
+          type: integer
+          description: Number of canceled subscriptions
+          example: 18
+        churnRate:
+          type: number
+          format: decimal
+          description: Churn rate as decimal (0-100)
+          example: 5.9
+        churnRatePercentage:
+          type: string
+          description: Formatted churn rate percentage
+          example: "5.90%"
+
+    SubscriptionGrowthData:
+      type: object
+      properties:
+        period:
+          type: string
+          description: Time period (format depends on granularity)
+          example: "2025-07"
+        newSubscriptions:
+          type: integer
+          description: New subscriptions created in period
+          example: 45
+        canceledSubscriptions:
+          type: integer
+          description: Subscriptions canceled in period
+          example: 8
+        netGrowth:
+          type: integer
+          description: Net growth (new - canceled)
+          example: 37
+        totalActive:
+          type: integer
+          description: Total active subscriptions at end of period
+          example: 182
+
+    RevenueSummaryResponse:
+      type: object
+      properties:
+        totalActiveSubscriptions:
+          type: integer
+          description: Total number of active subscriptions
+          example: 207
+        monthlyRecurringRevenue:
+          type: number
+          format: decimal
+          description: Total MRR from all active subscriptions (USD)
+          example: 4523.85
+        annualRecurringRevenue:
+          type: number
+          format: decimal
+          description: Total ARR (MRR * 12) (USD)
+          example: 54286.20
+        averageRevenuePerUser:
+          type: number
+          format: decimal
+          description: Average revenue per active subscription (USD)
+          example: 21.85
+        revenueByPlan:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevenueByPlan'
+          description: Revenue breakdown by plan
+
+    RevenueByPlan:
+      type: object
+      properties:
+        planName:
+          type: string
+          description: Plan name
+          example: "Pro"
+        subscriptions:
+          type: integer
+          description: Number of active subscriptions
+          example: 45
+        monthlyRevenue:
+          type: number
+          format: decimal
+          description: Total monthly revenue from this plan (USD)
+          example: 1349.55
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        status:
+          type: integer
+          description: HTTP status code
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Error message
+        path:
+          type: string
+          description: Request path
+
+  responses:
+    Unauthorized:
+      description: Authentication required or token invalid/expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 401
+            error: "Unauthorized"
+            message: "JWT token is missing or invalid"
+            path: "/api/v1/admin/analytics/subscriptions/by-plan"
+
+    Forbidden:
+      description: Insufficient permissions (requires ROLE_ADMIN)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 403
+            error: "Forbidden"
+            message: "Access denied: ROLE_ADMIN required"
+            path: "/api/v1/admin/analytics/subscriptions/by-plan"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 500
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+            path: "/api/v1/admin/analytics/subscriptions/by-plan"

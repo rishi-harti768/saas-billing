@@ -1,0 +1,521 @@
+openapi: 3.0.3
+info:
+  title: Subscription Management API
+  description: API for managing customer subscriptions (subscribe, upgrade, cancel) in the SaaS billing platform
+  version: 1.0.0
+  contact:
+    name: Enterprise SaaS Billing Team
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.billing.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Subscriptions
+    description: Subscription lifecycle operations (User and Admin)
+
+paths:
+  /subscriptions:
+    post:
+      tags:
+        - Subscriptions
+      summary: Create a new subscription
+      description: Subscribe the authenticated user to a billing plan. Creates subscription with ACTIVE status.
+      operationId: createSubscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscribeRequest'
+            example:
+              planId: 2
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User already has an active subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 409
+                error: "Conflict"
+                message: "User already has an active subscription. Please cancel or upgrade existing subscription."
+                path: "/api/v1/subscriptions"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/my-subscription:
+    get:
+      tags:
+        - Subscriptions
+      summary: Get current user's subscription
+      description: Retrieve the authenticated user's active subscription details
+      operationId: getMySubscription
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No active subscription found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 404
+                error: "Not Found"
+                message: "No active subscription found for user"
+                path: "/api/v1/subscriptions/my-subscription"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/{id}:
+    get:
+      tags:
+        - Subscriptions
+      summary: Get subscription by ID
+      description: Retrieve subscription details by ID. Users can only access their own subscriptions. Admins can access all.
+      operationId: getSubscriptionById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successfully retrieved subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (not your subscription)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/{id}/upgrade:
+    put:
+      tags:
+        - Subscriptions
+      summary: Upgrade subscription to a higher tier
+      description: Upgrade subscription to a different plan. Recalculates next billing date. Cannot upgrade from PAST_DUE status.
+      operationId: upgradeSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeRequest'
+            example:
+              newPlanId: 3
+      responses:
+        '200':
+          description: Subscription upgraded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Invalid upgrade request (e.g., upgrading from PAST_DUE status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Cannot upgrade subscription in PAST_DUE status. Please resolve payment issues first."
+                path: "/api/v1/subscriptions/123/upgrade"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (not your subscription)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription or plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Concurrent modification detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 409
+                error: "Conflict"
+                message: "Subscription was modified by another process. Please retry."
+                path: "/api/v1/subscriptions/123/upgrade"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/{id}/cancel:
+    delete:
+      tags:
+        - Subscriptions
+      summary: Cancel subscription
+      description: Cancel the subscription. Status changes to CANCELED. Billing stops immediately. User retains access until end of current billing period.
+      operationId: cancelSubscription
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Subscription canceled successfully
+        '400':
+          description: Subscription already canceled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                timestamp: "2026-01-25T14:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Subscription is already canceled"
+                path: "/api/v1/subscriptions/123/cancel"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Access denied (not your subscription)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/{id}/transitions:
+    get:
+      tags:
+        - Subscriptions
+      summary: Get subscription state transition history
+      description: Retrieve audit log of all state transitions for a subscription. Admin only.
+      operationId: getSubscriptionTransitions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successfully retrieved transition history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransitionLogResponse'
+              example:
+                - id: 1
+                  fromState: "ACTIVE"
+                  toState: "ACTIVE"
+                  reason: "Subscription created"
+                  transitionDate: "2026-01-01T10:00:00Z"
+                - id: 2
+                  fromState: "ACTIVE"
+                  toState: "PAST_DUE"
+                  reason: "Payment failed"
+                  transitionDate: "2026-01-15T12:30:00Z"
+                - id: 3
+                  fromState: "PAST_DUE"
+                  toState: "ACTIVE"
+                  reason: "Payment successful"
+                  transitionDate: "2026-01-16T09:00:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from /api/v1/auth/login
+
+  schemas:
+    SubscribeRequest:
+      type: object
+      required:
+        - planId
+      properties:
+        planId:
+          type: integer
+          format: int64
+          description: ID of the billing plan to subscribe to
+          example: 2
+
+    UpgradeRequest:
+      type: object
+      required:
+        - newPlanId
+      properties:
+        newPlanId:
+          type: integer
+          format: int64
+          description: ID of the new billing plan to upgrade to
+          example: 3
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Subscription ID
+          example: 123
+        userId:
+          type: integer
+          format: int64
+          description: User ID
+          example: 456
+        plan:
+          $ref: '#/components/schemas/PlanSummary'
+        status:
+          type: string
+          enum: [ACTIVE, PAST_DUE, CANCELED]
+          description: Current subscription status
+          example: "ACTIVE"
+        startDate:
+          type: string
+          format: date
+          description: Subscription start date
+          example: "2026-01-01"
+        nextBillingDate:
+          type: string
+          format: date
+          nullable: true
+          description: Next billing date (null if canceled)
+          example: "2026-02-01"
+        canceledAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Cancellation timestamp (null if not canceled)
+          example: null
+        createdDate:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2026-01-01T10:00:00Z"
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2026-01-25T14:30:00Z"
+
+    PlanSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Plan ID
+          example: 2
+        name:
+          type: string
+          description: Plan name
+          example: "Pro"
+        price:
+          type: number
+          format: decimal
+          description: Plan price in USD
+          example: 29.99
+        billingCycle:
+          type: string
+          enum: [MONTHLY, YEARLY]
+          description: Billing frequency
+          example: "MONTHLY"
+
+    TransitionLogResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Log entry ID
+          example: 1
+        fromState:
+          type: string
+          enum: [ACTIVE, PAST_DUE, CANCELED]
+          description: Previous state
+          example: "ACTIVE"
+        toState:
+          type: string
+          enum: [ACTIVE, PAST_DUE, CANCELED]
+          description: New state
+          example: "PAST_DUE"
+        reason:
+          type: string
+          description: Reason for transition
+          example: "Payment failed"
+        transitionDate:
+          type: string
+          format: date-time
+          description: Transition timestamp
+          example: "2026-01-15T12:30:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        status:
+          type: integer
+          description: HTTP status code
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Error message
+        path:
+          type: string
+          description: Request path
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters or validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 400
+            error: "Bad Request"
+            message: "Validation failed: planId is required"
+            path: "/api/v1/subscriptions"
+
+    Unauthorized:
+      description: Authentication required or token invalid/expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 401
+            error: "Unauthorized"
+            message: "JWT token is missing or invalid"
+            path: "/api/v1/subscriptions"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 403
+            error: "Forbidden"
+            message: "Access denied: You can only access your own subscriptions"
+            path: "/api/v1/subscriptions/123"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            timestamp: "2026-01-25T14:30:00Z"
+            status: 500
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+            path: "/api/v1/subscriptions"
