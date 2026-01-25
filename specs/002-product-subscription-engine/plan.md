@@ -61,7 +61,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
   - BillingPlan (aggregate root with feature limits)
   - Subscription (aggregate root with state transitions, billing dates)
 - **Value Objects**:
-  - Money (price representation with currency)
+  - Money (BigDecimal-based price representation, USD only per research.md)
   - BillingCycle (enum: MONTHLY, YEARLY)
   - SubscriptionState (enum: ACTIVE, PAST_DUE, CANCELED)
   - FeatureLimit (embedded value object)
@@ -311,8 +311,9 @@ src/main/resources/
 ├── application.yml                      # Cache, transaction configuration
 └── db/migration/
     ├── V003__create_billing_plan_table.sql
-    ├── V004__create_subscription_table.sql
-    └── V005__create_subscription_transition_log_table.sql
+    ├── V004__create_feature_limit_table.sql
+    ├── V005__create_subscription_table.sql
+    └── V006__create_subscription_transition_log_table.sql
 
 src/test/java/org/gb/billing/
 ├── controller/
@@ -338,3 +339,12 @@ src/test/java/org/gb/billing/
 > **No complexity violations** - All constitutional principles are satisfied without exceptions.
 
 This feature builds upon the authentication foundation from Phase 1 and implements well-established subscription management patterns. The state machine for subscription lifecycle is a standard domain pattern, and all complexity is justified by business requirements (financial data integrity, multi-tenant isolation, audit trails).
+
+## Out of Scope (Explicitly Excluded)
+
+The following features are intentionally excluded from this phase and will be addressed in future iterations:
+
+- **Subscription Downgrades**: Moving from higher tier to lower tier (e.g., Pro → Free). Requires refund/proration logic.
+- **Automatic Subscription Renewals**: Handled by payment processing system in Phase 3.
+- **Multi-Currency Support**: All prices are in USD for Phase 2.
+- **Proration**: Partial billing period charges for upgrades/cancellations.

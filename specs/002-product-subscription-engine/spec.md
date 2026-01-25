@@ -190,7 +190,7 @@ A SaaS owner needs to view subscription analytics including active subscriptions
 
 - **Feature Limit**: Represents usage or access restrictions defined by a billing plan with attributes including limit type (e.g., "api_calls", "max_users", "storage_gb"), limit value (numeric), and associated billing plan
 
-- **Subscription Transition Log**: Represents a historical record of subscription state changes with attributes including unique identifier, subscription reference, previous state, new state, transition timestamp, and transition reason
+- **SubscriptionTransitionLog**: Represents a historical record of subscription state changes with attributes including unique identifier, subscription reference, previous state, new state, transition timestamp, and transition reason
 
 ## Success Criteria _(mandatory)_
 
