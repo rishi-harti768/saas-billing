@@ -25,14 +25,14 @@
 
 **Purpose**: Project initialization and database schema setup
 
-- [ ] T001 Create database migration V003\_\_create_billing_plan_table.sql in src/main/resources/db/migration/
-- [ ] T002 Create database migration V004\_\_create_feature_limit_table.sql in src/main/resources/db/migration/
-- [ ] T003 Create database migration V005\_\_create_subscription_table.sql in src/main/resources/db/migration/
-- [ ] T004 Create database migration V006\_\_create_subscription_transition_log_table.sql in src/main/resources/db/migration/
-- [ ] T005 [P] Add Caffeine cache dependency to pom.xml (if not present)
-- [ ] T006 [P] Configure Caffeine cache in src/main/resources/application.yml
-- [ ] T006a [P] Add subscription grace period configuration property (billing.subscription.grace-period-days) in src/main/resources/application.yml
-- [ ] T007 [P] Create CacheConfig.java in src/main/java/org/gb/billing/config/
+- [x] T001 Create database migration V003\_\_create_billing_plan_table.sql in src/main/resources/db/migration/
+- [x] T002 Create database migration V004\_\_create_feature_limit_table.sql in src/main/resources/db/migration/
+- [x] T003 Create database migration V005\_\_create_subscription_table.sql in src/main/resources/db/migration/
+- [x] T004 Create database migration V006\_\_create_subscription_transition_log_table.sql in src/main/resources/db/migration/
+- [x] T005 [P] Add Caffeine cache dependency to pom.xml (if not present)
+- [x] T006 [P] Configure Caffeine cache in src/main/resources/application.yml
+- [x] T006a [P] Add subscription grace period configuration property (billing.subscription.grace-period-days) in src/main/resources/application.yml
+- [x] T007 [P] Create CacheConfig.java in src/main/java/org/gb/billing/config/
 
 ---
 
@@ -42,23 +42,23 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 [P] Create BillingCycle enum in src/main/java/org/gb/billing/entity/BillingCycle.java
-- [ ] T009 [P] Create SubscriptionState enum in src/main/java/org/gb/billing/entity/SubscriptionState.java
-- [ ] T010 [P] Create BillingPlan entity in src/main/java/org/gb/billing/entity/BillingPlan.java
-- [ ] T011 [P] Create FeatureLimit entity in src/main/java/org/gb/billing/entity/FeatureLimit.java
-- [ ] T012 [P] Create Subscription entity in src/main/java/org/gb/billing/entity/Subscription.java
-- [ ] T013 [P] Create SubscriptionTransitionLog entity in src/main/java/org/gb/billing/entity/SubscriptionTransitionLog.java
-- [ ] T014 [P] Create PlanRepository interface in src/main/java/org/gb/billing/repository/PlanRepository.java
-- [ ] T015 [P] Create SubscriptionRepository interface in src/main/java/org/gb/billing/repository/SubscriptionRepository.java
-- [ ] T016 [P] Create SubscriptionTransitionLogRepository interface in src/main/java/org/gb/billing/repository/SubscriptionTransitionLogRepository.java
-- [ ] T017 [P] Create custom exception PlanNotFoundException in src/main/java/org/gb/billing/exception/PlanNotFoundException.java
-- [ ] T018 [P] Create custom exception SubscriptionNotFoundException in src/main/java/org/gb/billing/exception/SubscriptionNotFoundException.java
-- [ ] T019 [P] Create custom exception InvalidStateTransitionException in src/main/java/org/gb/billing/exception/InvalidStateTransitionException.java
-- [ ] T020 [P] Create custom exception DuplicateSubscriptionException in src/main/java/org/gb/billing/exception/DuplicateSubscriptionException.java
-- [ ] T021 [P] Create custom exception PlanHasActiveSubscriptionsException in src/main/java/org/gb/billing/exception/PlanHasActiveSubscriptionsException.java
-- [ ] T022 [P] Create custom exception InvalidUpgradeException in src/main/java/org/gb/billing/exception/InvalidUpgradeException.java
-- [ ] T023 Update GlobalExceptionHandler in src/main/java/org/gb/billing/exception/GlobalExceptionHandler.java to handle new exceptions
-- [ ] T024 [P] Create SubscriptionStateMachine service in src/main/java/org/gb/billing/service/SubscriptionStateMachine.java
+- [x] T008 [P] Create BillingCycle enum in src/main/java/org/gb/billing/entity/BillingCycle.java
+- [x] T009 [P] Create SubscriptionState enum in src/main/java/org/gb/billing/entity/SubscriptionState.java
+- [x] T010 [P] Create BillingPlan entity in src/main/java/org/gb/billing/entity/BillingPlan.java
+- [x] T011 [P] Create FeatureLimit entity in src/main/java/org/gb/billing/entity/FeatureLimit.java
+- [x] T012 [P] Create Subscription entity in src/main/java/org/gb/billing/entity/Subscription.java
+- [x] T013 [P] Create SubscriptionTransitionLog entity in src/main/java/org/gb/billing/entity/SubscriptionTransitionLog.java
+- [x] T014 [P] Create PlanRepository interface in src/main/java/org/gb/billing/repository/PlanRepository.java
+- [x] T015 [P] Create SubscriptionRepository interface in src/main/java/org/gb/billing/repository/SubscriptionRepository.java
+- [x] T016 [P] Create SubscriptionTransitionLogRepository interface in src/main/java/org/gb/billing/repository/SubscriptionTransitionLogRepository.java
+- [x] T017 [P] Create custom exception PlanNotFoundException in src/main/java/org/gb/billing/exception/PlanNotFoundException.java
+- [x] T018 [P] Create custom exception SubscriptionNotFoundException in src/main/java/org/gb/billing/exception/SubscriptionNotFoundException.java
+- [x] T019 [P] Create custom exception InvalidStateTransitionException in src/main/java/org/gb/billing/exception/InvalidStateTransitionException.java
+- [x] T020 [P] Create custom exception DuplicateSubscriptionException in src/main/java/org/gb/billing/exception/DuplicateSubscriptionException.java
+- [x] T021 [P] Create custom exception PlanHasActiveSubscriptionsException in src/main/java/org/gb/billing/exception/PlanHasActiveSubscriptionsException.java
+- [x] T022 [P] Create custom exception InvalidUpgradeException in src/main/java/org/gb/billing/exception/InvalidUpgradeException.java
+- [x] T023 Update GlobalExceptionHandler in src/main/java/org/gb/billing/exception/GlobalExceptionHandler.java to handle new exceptions
+- [x] T024 [P] Create SubscriptionStateMachine service in src/main/java/org/gb/billing/service/SubscriptionStateMachine.java
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -74,34 +74,34 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T025 [P] [US1] Create PlanRepositoryTest in src/test/java/org/gb/billing/repository/PlanRepositoryTest.java
-- [ ] T026 [P] [US1] Create PlanServiceTest in src/test/java/org/gb/billing/service/PlanServiceTest.java
-- [ ] T027 [P] [US1] Create PlanControllerTest in src/test/java/org/gb/billing/controller/PlanControllerTest.java
+- [x] T025 [P] [US1] Create PlanRepositoryTest in src/test/java/org/gb/billing/repository/PlanRepositoryTest.java
+- [x] T026 [P] [US1] Create PlanServiceTest in src/test/java/org/gb/billing/service/PlanServiceTest.java
+- [x] T027 [P] [US1] Create PlanControllerTest in src/test/java/org/gb/billing/controller/PlanControllerTest.java
 
 ### DTOs for User Story 1
 
-- [ ] T028 [P] [US1] Create CreatePlanRequest DTO in src/main/java/org/gb/billing/dto/request/CreatePlanRequest.java
-- [ ] T029 [P] [US1] Create UpdatePlanRequest DTO in src/main/java/org/gb/billing/dto/request/UpdatePlanRequest.java
-- [ ] T030 [P] [US1] Create FeatureLimitRequest DTO in src/main/java/org/gb/billing/dto/request/FeatureLimitRequest.java
-- [ ] T031 [P] [US1] Create PlanResponse DTO in src/main/java/org/gb/billing/dto/response/PlanResponse.java
-- [ ] T032 [P] [US1] Create FeatureLimitResponse DTO in src/main/java/org/gb/billing/dto/response/FeatureLimitResponse.java
-- [ ] T033 [P] [US1] Create PlanListResponse DTO in src/main/java/org/gb/billing/dto/response/PlanListResponse.java
+- [x] T028 [P] [US1] Create CreatePlanRequest DTO in src/main/java/org/gb/billing/dto/request/CreatePlanRequest.java
+- [x] T029 [P] [US1] Create UpdatePlanRequest DTO in src/main/java/org/gb/billing/dto/request/UpdatePlanRequest.java
+- [x] T030 [P] [US1] Create FeatureLimitRequest DTO in src/main/java/org/gb/billing/dto/request/FeatureLimitRequest.java
+- [x] T031 [P] [US1] Create PlanResponse DTO in src/main/java/org/gb/billing/dto/response/PlanResponse.java
+- [x] T032 [P] [US1] Create FeatureLimitResponse DTO in src/main/java/org/gb/billing/dto/response/FeatureLimitResponse.java
+- [x] T033 [P] [US1] Create PlanListResponse DTO in src/main/java/org/gb/billing/dto/response/PlanListResponse.java
 
 ### Implementation for User Story 1
 
-- [ ] T034 [US1] Implement PlanService.createPlan() with feature limit management in src/main/java/org/gb/billing/service/PlanService.java
-- [ ] T035 [US1] Implement PlanService.getAllPlans() with @Cacheable in src/main/java/org/gb/billing/service/PlanService.java
-- [ ] T036 [US1] Implement PlanService.getPlanById() with @Cacheable in src/main/java/org/gb/billing/service/PlanService.java
-- [ ] T037 [US1] Implement PlanService.updatePlan() with @CacheEvict in src/main/java/org/gb/billing/service/PlanService.java
-- [ ] T038 [US1] Implement PlanService.deletePlan() with soft delete and active subscription check in src/main/java/org/gb/billing/service/PlanService.java
-- [ ] T039 [US1] Create PlanController with POST /api/v1/plans endpoint in src/main/java/org/gb/billing/controller/PlanController.java
-- [ ] T040 [US1] Add GET /api/v1/plans endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
-- [ ] T041 [US1] Add GET /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
-- [ ] T042 [US1] Add PUT /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
-- [ ] T043 [US1] Add DELETE /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
-- [ ] T044 [US1] Add Swagger/OpenAPI annotations to all PlanController endpoints
-- [ ] T045 [US1] Add validation annotations to all Plan DTOs (@Valid, @NotBlank, @DecimalMin, etc.)
-- [ ] T046 [US1] Add logging for plan operations (create, update, delete) in PlanService
+- [x] T034 [US1] Implement PlanService.createPlan() with feature limit management in src/main/java/org/gb/billing/service/PlanService.java
+- [x] T035 [US1] Implement PlanService.getAllPlans() with @Cacheable in src/main/java/org/gb/billing/service/PlanService.java
+- [x] T036 [US1] Implement PlanService.getPlanById() with @Cacheable in src/main/java/org/gb/billing/service/PlanService.java
+- [x] T037 [US1] Implement PlanService.updatePlan() with @CacheEvict in src/main/java/org/gb/billing/service/PlanService.java
+- [x] T038 [US1] Implement PlanService.deletePlan() with soft delete and active subscription check in src/main/java/org/gb/billing/service/PlanService.java
+- [x] T039 [US1] Create PlanController with POST /api/v1/plans endpoint in src/main/java/org/gb/billing/controller/PlanController.java
+- [x] T040 [US1] Add GET /api/v1/plans endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
+- [x] T041 [US1] Add GET /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
+- [x] T042 [US1] Add PUT /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
+- [x] T043 [US1] Add DELETE /api/v1/plans/{id} endpoint to PlanController in src/main/java/org/gb/billing/controller/PlanController.java
+- [x] T044 [US1] Add Swagger/OpenAPI annotations to all PlanController endpoints
+- [x] T045 [US1] Add validation annotations to all Plan DTOs (@Valid, @NotBlank, @DecimalMin, etc.)
+- [x] T046 [US1] Add logging for plan operations (create, update, delete) in PlanService
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - admins can manage billing plans
 
@@ -115,29 +115,29 @@
 
 ### Tests for User Story 2
 
-- [ ] T047 [P] [US2] Create SubscriptionRepositoryTest in src/test/java/org/gb/billing/repository/SubscriptionRepositoryTest.java
-- [ ] T048 [P] [US2] Create SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
-- [ ] T049 [P] [US2] Create SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
+- [x] T047 [P] [US2] Create SubscriptionRepositoryTest in src/test/java/org/gb/billing/repository/SubscriptionRepositoryTest.java
+- [x] T048 [P] [US2] Create SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
+- [x] T049 [P] [US2] Create SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
 
 ### DTOs for User Story 2
 
-- [ ] T050 [P] [US2] Create SubscribeRequest DTO in src/main/java/org/gb/billing/dto/request/SubscribeRequest.java
-- [ ] T051 [P] [US2] Create SubscriptionResponse DTO in src/main/java/org/gb/billing/dto/response/SubscriptionResponse.java
-- [ ] T052 [P] [US2] Create PlanSummary DTO in src/main/java/org/gb/billing/dto/response/PlanSummary.java
+- [x] T050 [P] [US2] Create SubscribeRequest DTO in src/main/java/org/gb/billing/dto/request/SubscribeRequest.java
+- [x] T051 [P] [US2] Create SubscriptionResponse DTO in src/main/java/org/gb/billing/dto/response/SubscriptionResponse.java
+- [x] T052 [P] [US2] Create PlanSummary DTO in src/main/java/org/gb/billing/dto/response/PlanSummary.java
 
 ### Implementation for User Story 2
 
-- [ ] T053 [US2] Implement SubscriptionService.createSubscription() with duplicate check and state logging in src/main/java/org/gb/billing/service/SubscriptionService.java
-- [ ] T054 [US2] Implement SubscriptionService.getSubscriptionById() with tenant filtering in src/main/java/org/gb/billing/service/SubscriptionService.java
-- [ ] T055 [US2] Implement SubscriptionService.getMySubscription() for current user in src/main/java/org/gb/billing/service/SubscriptionService.java
-- [ ] T056 [US2] Implement billing date calculation logic in Subscription entity (calculateNextBillingDate method)
-- [ ] T057 [US2] Create SubscriptionController with POST /api/v1/subscriptions endpoint in src/main/java/org/gb/billing/controller/SubscriptionController.java
-- [ ] T058 [US2] Add GET /api/v1/subscriptions/my-subscription endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
-- [ ] T059 [US2] Add GET /api/v1/subscriptions/{id} endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
-- [ ] T060 [US2] Add Swagger/OpenAPI annotations to all SubscriptionController endpoints
-- [ ] T061 [US2] Add validation annotations to Subscription DTOs
-- [ ] T062 [US2] Add logging for subscription creation in SubscriptionService
-- [ ] T063 [US2] Implement tenant isolation check in SubscriptionService (prevent cross-tenant access)
+- [x] T053 [US2] Implement SubscriptionService.createSubscription() with duplicate check and state logging in src/main/java/org/gb/billing/service/SubscriptionService.java
+- [x] T054 [US2] Implement SubscriptionService.getSubscriptionById() with tenant filtering in src/main/java/org/gb/billing/service/SubscriptionService.java
+- [x] T055 [US2] Implement SubscriptionService.getMySubscription() for current user in src/main/java/org/gb/billing/service/SubscriptionService.java
+- [x] T056 [US2] Implement billing date calculation logic in Subscription entity (calculateNextBillingDate method)
+- [x] T057 [US2] Create SubscriptionController with POST /api/v1/subscriptions endpoint in src/main/java/org/gb/billing/controller/SubscriptionController.java
+- [x] T058 [US2] Add GET /api/v1/subscriptions/my-subscription endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
+- [x] T059 [US2] Add GET /api/v1/subscriptions/{id} endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
+- [x] T060 [US2] Add Swagger/OpenAPI annotations to all SubscriptionController endpoints
+- [x] T061 [US2] Add validation annotations to Subscription DTOs
+- [x] T062 [US2] Add logging for subscription creation in SubscriptionService
+- [x] T063 [US2] Implement tenant isolation check in SubscriptionService (prevent cross-tenant access)
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - customers can subscribe to plans created by admins
 
@@ -151,22 +151,22 @@
 
 ### Tests for User Story 3
 
-- [ ] T064 [P] [US3] Add upgrade test cases to SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
-- [ ] T065 [P] [US3] Add upgrade integration test to SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
+- [x] T064 [P] [US3] Add upgrade test cases to SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
+- [x] T065 [P] [US3] Add upgrade integration test to SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
 
 ### DTOs for User Story 3
 
-- [ ] T066 [P] [US3] Create UpgradeRequest DTO in src/main/java/org/gb/billing/dto/request/UpgradeRequest.java
+- [x] T066 [P] [US3] Create UpgradeRequest DTO in src/main/java/org/gb/billing/dto/request/UpgradeRequest.java
 
 ### Implementation for User Story 3
 
-- [ ] T067 [US3] Implement SubscriptionService.upgradeSubscription() with state validation and billing recalculation in src/main/java/org/gb/billing/service/SubscriptionService.java
-- [ ] T068 [US3] Implement upgradeToPlan() method in Subscription entity
-- [ ] T069 [US3] Add state transition validation in SubscriptionStateMachine (prevent upgrade from PAST_DUE)
-- [ ] T070 [US3] Add PUT /api/v1/subscriptions/{id}/upgrade endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
-- [ ] T071 [US3] Add Swagger/OpenAPI annotations to upgrade endpoint
-- [ ] T072 [US3] Add logging for subscription upgrades in SubscriptionService
-- [ ] T073 [US3] Handle OptimisticLockException in SubscriptionService with retry logic
+- [x] T067 [US3] Implement SubscriptionService.upgradeSubscription() with state validation and billing recalculation in src/main/java/org/gb/billing/service/SubscriptionService.java
+- [x] T068 [US3] Implement upgradeToPlan() method in Subscription entity
+- [x] T069 [US3] Add state transition validation in SubscriptionStateMachine (prevent upgrade from PAST_DUE)
+- [x] T070 [US3] Add PUT /api/v1/subscriptions/{id}/upgrade endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
+- [x] T071 [US3] Add Swagger/OpenAPI annotations to upgrade endpoint
+- [x] T072 [US3] Add logging for subscription upgrades in SubscriptionService
+- [x] T073 [US3] Handle OptimisticLockException in SubscriptionService with retry logic
 
 **Checkpoint**: At this point, User Stories 1, 2, AND 3 should all work - customers can upgrade subscriptions
 
@@ -180,17 +180,17 @@
 
 ### Tests for User Story 4
 
-- [ ] T074 [P] [US4] Add cancellation test cases to SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
-- [ ] T075 [P] [US4] Add cancellation integration test to SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
+- [x] T074 [P] [US4] Add cancellation test cases to SubscriptionServiceTest in src/test/java/org/gb/billing/service/SubscriptionServiceTest.java
+- [x] T075 [P] [US4] Add cancellation integration test to SubscriptionControllerTest in src/test/java/org/gb/billing/controller/SubscriptionControllerTest.java
 
 ### Implementation for User Story 4
 
-- [ ] T076 [US4] Implement SubscriptionService.cancelSubscription() with state transition logging in src/main/java/org/gb/billing/service/SubscriptionService.java
-- [ ] T077 [US4] Implement cancel() method with access retention logic in Subscription entity
-- [ ] T078 [US4] Add state transition validation in SubscriptionStateMachine (prevent canceling already canceled subscription)
-- [ ] T079 [US4] Add DELETE /api/v1/subscriptions/{id}/cancel endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
-- [ ] T080 [US4] Add Swagger/OpenAPI annotations to cancel endpoint
-- [ ] T081 [US4] Add logging for subscription cancellations in SubscriptionService
+- [x] T076 [US4] Implement SubscriptionService.cancelSubscription() with state transition logging in src/main/java/org/gb/billing/service/SubscriptionService.java
+- [x] T077 [US4] Implement cancel() method with access retention logic in Subscription entity
+- [x] T078 [US4] Add state transition validation in SubscriptionStateMachine (prevent canceling already canceled subscription)
+- [x] T079 [US4] Add DELETE /api/v1/subscriptions/{id}/cancel endpoint to SubscriptionController in src/main/java/org/gb/billing/controller/SubscriptionController.java
+- [x] T080 [US4] Add Swagger/OpenAPI annotations to cancel endpoint
+- [x] T081 [US4] Add logging for subscription cancellations in SubscriptionService
 
 **Checkpoint**: At this point, complete subscription lifecycle is functional (create, upgrade, cancel)
 
@@ -204,20 +204,20 @@
 
 ### Tests for User Story 5
 
-- [ ] T082 [P] [US5] Create SubscriptionStateMachineTest in src/test/java/org/gb/billing/service/SubscriptionStateMachineTest.java
-- [ ] T083 [P] [US5] Add state transition test cases to SubscriptionServiceTest
+- [x] T082 [P] [US5] Create SubscriptionStateMachineTest in src/test/java/org/gb/billing/service/SubscriptionStateMachineTest.java
+- [x] T083 [P] [US5] Add state transition test cases to SubscriptionServiceTest
 
 ### Implementation for User Story 5
 
-- [ ] T084 [US5] Implement validateTransition() in SubscriptionStateMachine with transition rules
-- [ ] T085 [US5] Implement transitionTo() in SubscriptionStateMachine with logging
-- [ ] T086 [US5] Implement SubscriptionService.transitionToPastDue() for payment failures
-- [ ] T087 [US5] Implement SubscriptionService.transitionToActive() for successful payments
-- [ ] T088 [US5] Implement SubscriptionService.transitionToCanceled() for grace period expiry
-- [ ] T089 [US5] Add state transition logging to SubscriptionTransitionLogRepository
-- [ ] T090 [US5] Add GET /api/v1/subscriptions/{id}/transitions endpoint to SubscriptionController for viewing transition history
-- [ ] T091 [US5] Add Swagger/OpenAPI annotations to transitions endpoint
-- [ ] T092 [US5] Add comprehensive logging for all state transitions
+- [x] T084 [US5] Implement validateTransition() in SubscriptionStateMachine with transition rules
+- [x] T085 [US5] Implement transitionTo() in SubscriptionStateMachine with logging
+- [x] T086 [US5] Implement SubscriptionService.transitionToPastDue() for payment failures
+- [x] T087 [US5] Implement SubscriptionService.transitionToActive() for successful payments
+- [x] T088 [US5] Implement SubscriptionService.transitionToCanceled() for grace period expiry
+- [x] T089 [US5] Add state transition logging to SubscriptionTransitionLogRepository
+- [x] T090 [US5] Add GET /api/v1/subscriptions/{id}/transitions endpoint to SubscriptionController for viewing transition history
+- [x] T091 [US5] Add Swagger/OpenAPI annotations to transitions endpoint
+- [x] T092 [US5] Add comprehensive logging for all state transitions
 
 **Checkpoint**: State machine is fully functional with audit trail
 
@@ -231,40 +231,40 @@
 
 ### Tests for User Story 6
 
-- [ ] T093 [P] [US6] Create AnalyticsServiceTest in src/test/java/org/gb/billing/service/AnalyticsServiceTest.java
-- [ ] T094 [P] [US6] Create AnalyticsControllerTest in src/test/java/org/gb/billing/controller/AnalyticsControllerTest.java
+- [x] T093 [P] [US6] Create AnalyticsServiceTest in src/test/java/org/gb/billing/service/AnalyticsServiceTest.java
+- [x] T094 [P] [US6] Create AnalyticsControllerTest in src/test/java/org/gb/billing/controller/AnalyticsControllerTest.java
 
 ### DTOs for User Story 6
 
-- [ ] T095 [P] [US6] Create SubscriptionCountByPlan DTO in src/main/java/org/gb/billing/dto/response/SubscriptionCountByPlan.java
-- [ ] T096 [P] [US6] Create SubscriptionCountByStatus DTO in src/main/java/org/gb/billing/dto/response/SubscriptionCountByStatus.java
-- [ ] T097 [P] [US6] Create ChurnRateResponse DTO in src/main/java/org/gb/billing/dto/response/ChurnRateResponse.java
-- [ ] T098 [P] [US6] Create SubscriptionGrowthData DTO in src/main/java/org/gb/billing/dto/response/SubscriptionGrowthData.java
-- [ ] T099 [P] [US6] Create RevenueSummaryResponse DTO in src/main/java/org/gb/billing/dto/response/RevenueSummaryResponse.java
-- [ ] T100 [P] [US6] Create RevenueByPlan DTO in src/main/java/org/gb/billing/dto/response/RevenueByPlan.java
+- [x] T095 [P] [US6] Create SubscriptionCountByPlan DTO in src/main/java/org/gb/billing/dto/response/SubscriptionCountByPlan.java
+- [x] T096 [P] [US6] Create SubscriptionCountByStatus DTO in src/main/java/org/gb/billing/dto/response/SubscriptionCountByStatus.java
+- [x] T097 [P] [US6] Create ChurnRateResponse DTO in src/main/java/org/gb/billing/dto/response/ChurnRateResponse.java
+- [x] T098 [P] [US6] Create SubscriptionGrowthData DTO in src/main/java/org/gb/billing/dto/response/SubscriptionGrowthData.java
+- [x] T099 [P] [US6] Create RevenueSummaryResponse DTO in src/main/java/org/gb/billing/dto/response/RevenueSummaryResponse.java
+- [x] T100 [P] [US6] Create RevenueByPlan DTO in src/main/java/org/gb/billing/dto/response/RevenueByPlan.java
 
 ### Repository Queries for User Story 6
 
-- [ ] T101 [P] [US6] Add countActiveSubscriptionsByPlan() query to SubscriptionRepository
-- [ ] T102 [P] [US6] Add countSubscriptionsByStatus() query to SubscriptionRepository
-- [ ] T103 [P] [US6] Add calculateChurnRate() native query to SubscriptionRepository
-- [ ] T104 [P] [US6] Add findSubscriptionGrowthData() query to SubscriptionRepository
+- [x] T101 [P] [US6] Add countActiveSubscriptionsByPlan() query to SubscriptionRepository
+- [x] T102 [P] [US6] Add countSubscriptionsByStatus() query to SubscriptionRepository
+- [x] T103 [P] [US6] Add calculateChurnRate() native query to SubscriptionRepository
+- [x] T104 [P] [US6] Add findSubscriptionGrowthData() query to SubscriptionRepository
 
 ### Implementation for User Story 6
 
-- [ ] T105 [US6] Implement AnalyticsService.getSubscriptionCountByPlan() in src/main/java/org/gb/billing/service/AnalyticsService.java
-- [ ] T106 [US6] Implement AnalyticsService.getSubscriptionCountByStatus() in src/main/java/org/gb/billing/service/AnalyticsService.java
-- [ ] T107 [US6] Implement AnalyticsService.calculateChurnRate() in src/main/java/org/gb/billing/service/AnalyticsService.java
-- [ ] T108 [US6] Implement AnalyticsService.getSubscriptionGrowth() in src/main/java/org/gb/billing/service/AnalyticsService.java
-- [ ] T109 [US6] Implement AnalyticsService.getRevenueSummary() with MRR/ARR calculations in src/main/java/org/gb/billing/service/AnalyticsService.java
-- [ ] T110 [US6] Create AnalyticsController with GET /api/v1/admin/analytics/subscriptions/by-plan endpoint in src/main/java/org/gb/billing/controller/AnalyticsController.java
-- [ ] T111 [US6] Add GET /api/v1/admin/analytics/subscriptions/by-status endpoint to AnalyticsController
-- [ ] T112 [US6] Add GET /api/v1/admin/analytics/churn-rate endpoint to AnalyticsController
-- [ ] T113 [US6] Add GET /api/v1/admin/analytics/subscription-growth endpoint to AnalyticsController
-- [ ] T114 [US6] Add GET /api/v1/admin/analytics/revenue-summary endpoint to AnalyticsController
-- [ ] T115 [US6] Add Swagger/OpenAPI annotations to all AnalyticsController endpoints
-- [ ] T116 [US6] Add ROLE_ADMIN authorization to all analytics endpoints
-- [ ] T117 [US6] Add caching to analytics queries with 1-minute TTL
+- [x] T105 [US6] Implement AnalyticsService.getSubscriptionCountByPlan() in src/main/java/org/gb/billing/service/AnalyticsService.java
+- [x] T106 [US6] Implement AnalyticsService.getSubscriptionCountByStatus() in src/main/java/org/gb/billing/service/AnalyticsService.java
+- [x] T107 [US6] Implement AnalyticsService.calculateChurnRate() in src/main/java/org/gb/billing/service/AnalyticsService.java
+- [x] T108 [US6] Implement AnalyticsService.getSubscriptionGrowth() in src/main/java/org/gb/billing/service/AnalyticsService.java
+- [x] T109 [US6] Implement AnalyticsService.getRevenueSummary() with MRR/ARR calculations in src/main/java/org/gb/billing/service/AnalyticsService.java
+- [x] T110 [US6] Create AnalyticsController with GET /api/v1/admin/analytics/subscriptions/by-plan endpoint in src/main/java/org/gb/billing/controller/AnalyticsController.java
+- [x] T111 [US6] Add GET /api/v1/admin/analytics/subscriptions/by-status endpoint to AnalyticsController
+- [x] T112 [US6] Add GET /api/v1/admin/analytics/churn-rate endpoint to AnalyticsController
+- [x] T113 [US6] Add GET /api/v1/admin/analytics/subscription-growth endpoint to AnalyticsController
+- [x] T114 [US6] Add GET /api/v1/admin/analytics/revenue-summary endpoint to AnalyticsController
+- [x] T115 [US6] Add Swagger/OpenAPI annotations to all AnalyticsController endpoints
+- [x] T116 [US6] Add ROLE_ADMIN authorization to all analytics endpoints
+- [x] T117 [US6] Add caching to analytics queries with 1-minute TTL
 
 **Checkpoint**: All user stories complete - full feature functionality delivered
 
@@ -274,10 +274,10 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T118 [P] Add comprehensive Javadoc comments to all public service methods
-- [ ] T119 [P] Add database indexes per data-model.md (idx_billing_plan_deleted, idx_subscription_tenant_status, etc.)
-- [ ] T120 [P] Create sample data SQL script for testing in src/main/resources/db/migration/V007\_\_insert_sample_plans.sql
-- [ ] T121 [P] Update README.md with feature documentation and API endpoints
+- [x] T118 [P] Add comprehensive Javadoc comments to all public service methods
+- [x] T119 [P] Add database indexes per data-model.md (idx_billing_plan_deleted, idx_subscription_tenant_status, etc.)
+- [x] T120 [P] Create sample data SQL script for testing in src/main/resources/db/migration/V007\_\_insert_sample_plans.sql
+- [x] T121 [P] Update README.md with feature documentation and API endpoints
 - [ ] T122 Run all integration tests and verify quickstart.md workflow
 - [ ] T123 Performance testing: Verify plan caching reduces DB queries
 - [ ] T124 Performance testing: Verify analytics queries complete in <3 seconds for 10,000 subscriptions

@@ -113,6 +113,135 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle plan not found errors.
+     * Returns HTTP 404 Not Found.
+     */
+    @ExceptionHandler(PlanNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePlanNotFound(
+            PlanNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Plan not found: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Handle subscription not found errors.
+     * Returns HTTP 404 Not Found.
+     */
+    @ExceptionHandler(SubscriptionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleSubscriptionNotFound(
+            SubscriptionNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Subscription not found: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Handle invalid state transition errors.
+     * Returns HTTP 400 Bad Request.
+     */
+    @ExceptionHandler(InvalidStateTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidStateTransition(
+            InvalidStateTransitionException ex, HttpServletRequest request) {
+        logger.warn("Invalid state transition: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handle duplicate subscription errors.
+     * Returns HTTP 409 Conflict.
+     */
+    @ExceptionHandler(DuplicateSubscriptionException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateSubscription(
+            DuplicateSubscriptionException ex, HttpServletRequest request) {
+        logger.warn("Duplicate subscription attempt: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * Handle plan deletion with active subscriptions errors.
+     * Returns HTTP 409 Conflict.
+     */
+    @ExceptionHandler(PlanHasActiveSubscriptionsException.class)
+    public ResponseEntity<ErrorResponse> handlePlanHasActiveSubscriptions(
+            PlanHasActiveSubscriptionsException ex, HttpServletRequest request) {
+        logger.warn("Plan deletion blocked: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * Handle invalid upgrade errors.
+     * Returns HTTP 400 Bad Request.
+     */
+    @ExceptionHandler(InvalidUpgradeException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidUpgrade(
+            InvalidUpgradeException ex, HttpServletRequest request) {
+        logger.warn("Invalid upgrade attempt: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLockingFailure(
+            org.springframework.dao.OptimisticLockingFailureException ex, HttpServletRequest request) {
+        logger.warn("Optimistic locking failure: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                "Resource was modified by another transaction. Please refresh and try again.",
+                request.getRequestURI()
+        );
+        
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * Handle all other unexpected exceptions.
      * Returns HTTP 500 Internal Server Error.
      */
