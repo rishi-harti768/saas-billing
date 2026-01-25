@@ -7,7 +7,7 @@
 ## Prerequisites
 
 - **Java**: JDK 17 or higher
-- **Maven**: 3.8+ or Gradle 7.5+
+- **Maven**: 3.8+
 - **PostgreSQL**: 14+ (local or Docker)
 - **IDE**: IntelliJ IDEA, Eclipse, or VS Code with Java extensions
 - **API Client**: Postman, cURL, or HTTPie for testing

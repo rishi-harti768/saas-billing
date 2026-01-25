@@ -34,7 +34,7 @@ Subscribers (customers of the SaaS platform) need to create their own accounts a
 
 **Acceptance Scenarios**:
 
-1. **Given** a new subscriber registration request, **When** valid email, password, and organization/tenant information is provided, **Then** a new user account is created with ROLE_USER and associated tenantId
+1. **Given** a new subscriber registration request, **When** valid email, password, and tenant information is provided, **Then** a new user account is created with ROLE_USER and associated tenantId
 2. **Given** an existing subscriber account, **When** correct credentials are provided to the login endpoint, **Then** a JWT token is returned containing ROLE_USER role and tenantId
 3. **Given** two subscribers from different tenants, **When** each logs in with their credentials, **Then** each receives a token with their respective unique tenantId
 4. **Given** a subscriber with a valid JWT token, **When** they attempt to access resources, **Then** the system automatically filters data based on their tenantId to ensure tenant isolation
@@ -86,6 +86,17 @@ Users need clear, immediate feedback when they provide invalid input during regi
 - What happens when concurrent registration requests are made with the same email?
 - How does the system handle special characters in passwords during BCrypt encoding?
 
+**Edge Case Handling Status**:
+
+- ✅ Duplicate email registration: Covered by FR-010, implemented in T032, T016, T019
+- ✅ Expired JWT tokens: Covered by FR-013, implemented in T022, T018, T019
+- ✅ ROLE_USER accessing admin resources: Covered by FR-002, implemented in T027 (Spring Security RBAC)
+- ✅ Malformed JWT tokens: Covered by FR-014, implemented in T022, T025
+- ✅ Missing/invalid tenantId: Covered by FR-009, FR-017, implemented in T046-T049
+- ✅ Timing attacks during password validation: Mitigated by BCrypt (constant-time comparison), FR-005
+- ✅ Concurrent registration with same email: Covered by FR-010 (database UNIQUE constraint), documented in research.md
+- ✅ Special characters in passwords: Handled by BCrypt encoding, no special escaping needed
+
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
@@ -98,7 +109,7 @@ Users need clear, immediate feedback when they provide invalid input during regi
 - **FR-006**: System MUST validate email addresses using standard email format validation
 - **FR-007**: System MUST validate that passwords meet minimum security requirements (at least 8 characters)
 - **FR-008**: System MUST validate that required fields (email, password) are not blank or null
-- **FR-009**: System MUST include tenantId or organizationId in the authentication token for ROLE_USER accounts to enable multi-tenant data isolation
+- **FR-009**: System MUST include tenantId in the authentication token for ROLE_USER accounts to enable multi-tenant data isolation
 - **FR-010**: System MUST prevent duplicate user registrations with the same email address
 - **FR-011**: System MUST include user role information in the JWT token payload
 - **FR-012**: System MUST validate JWT tokens on every authenticated request
@@ -113,7 +124,7 @@ Users need clear, immediate feedback when they provide invalid input during regi
 
 - **User**: Represents a system user (either admin or subscriber) with attributes including unique identifier, email address, encrypted password, assigned role (ROLE_ADMIN or ROLE_USER), and optional tenantId/organizationId for multi-tenant isolation
 - **Authentication Token (JWT)**: Represents a stateless authentication credential containing user identifier, role information, tenantId (for subscribers), token expiration time, and cryptographic signature
-- **Tenant/Organization**: Represents a logical grouping of subscribers for data isolation, with attributes including unique identifier and association with multiple subscriber users
+- **Tenant**: Represents a logical grouping of subscribers for data isolation, with attributes including unique identifier and association with multiple subscriber users
 - **Registration Request**: Represents user-provided data for account creation including email, password, role designation, and optional tenant information
 - **Login Request**: Represents user-provided credentials for authentication including email and password
 
@@ -129,5 +140,5 @@ Users need clear, immediate feedback when they provide invalid input during regi
 - **SC-006**: 95% of validation errors provide clear, actionable feedback to users on first attempt
 - **SC-007**: System prevents 100% of duplicate email registrations
 - **SC-008**: System rejects 100% of expired or invalid JWT tokens
-- **SC-009**: Authentication system can handle at least 100 concurrent login requests without performance degradation
+- **SC-009**: Authentication system can handle at least 100 concurrent login requests while maintaining p95 response time <2 seconds and throughput >90% of single-user baseline
 - **SC-010**: Zero plain-text passwords are logged or exposed in error messages
