@@ -12,6 +12,7 @@ import org.gb.billing.dto.request.LoginRequest;
 import org.gb.billing.dto.request.RegisterRequest;
 import org.gb.billing.dto.response.AuthResponse;
 import org.gb.billing.dto.response.ErrorResponse;
+import org.gb.billing.dto.response.UserResponse;
 import org.gb.billing.entity.User;
 import org.gb.billing.service.AuthenticationService;
 import org.gb.billing.service.UserService;
@@ -133,35 +134,5 @@ public class AuthController {
         response.setExpiresIn(jwtProperties.getExpiration());
 
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * DTO for user response (registration).
-     * Excludes sensitive information like password.
-     */
-    public static class UserResponse {
-        private Long id;
-        private String email;
-        private String role;
-        private Long tenantId;
-        private String firstName;
-        private String lastName;
-
-        public UserResponse(Long id, String email, String role, Long tenantId, String firstName, String lastName) {
-            this.id = id;
-            this.email = email;
-            this.role = role;
-            this.tenantId = tenantId;
-            this.firstName = firstName;
-            this.lastName = lastName;
-        }
-
-        // Getters
-        public Long getId() { return id; }
-        public String getEmail() { return email; }
-        public String getRole() { return role; }
-        public Long getTenantId() { return tenantId; }
-        public String getFirstName() { return firstName; }
-        public String getLastName() { return lastName; }
     }
 }

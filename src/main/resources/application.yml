@@ -48,6 +48,32 @@ jwt:
   secret: ${JWT_SECRET:CHANGE_THIS_SECRET_IN_PRODUCTION_USE_AT_LEAST_32_CHARACTERS}
   expiration: 86400000  # 24 hours in milliseconds
 
+# Stripe Configuration (Phase 3)
+stripe:
+  api:
+    key: ${STRIPE_API_KEY:sk_test_mock_key_for_mvp}
+  enabled: false  # Set to true to enable real Stripe integration
+
+# Email Configuration (Phase 3)
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:your-email@gmail.com}
+  password: ${MAIL_PASSWORD:your-app-password}
+  from: ${MAIL_FROM:noreply@billing.com}
+  enabled: false  # Set to true to enable email sending
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+
+# Invoice Configuration (Phase 3)
+invoice:
+  storage:
+    path: ${INVOICE_PATH:./invoices}
+
 # Logging Configuration
 logging:
   level:

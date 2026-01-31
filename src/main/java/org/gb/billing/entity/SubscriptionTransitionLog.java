@@ -2,6 +2,10 @@ package org.gb.billing.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,6 +30,7 @@ import java.util.UUID;
            @Index(name = "idx_transition_log_transitioned_at", columnList = "transitioned_at"),
            @Index(name = "idx_transition_log_to_status", columnList = "to_status")
        })
+@EntityListeners(AuditingEntityListener.class)
 public class SubscriptionTransitionLog {
 
     @Id
@@ -50,6 +55,18 @@ public class SubscriptionTransitionLog {
     @CreationTimestamp
     @Column(name = "transitioned_at", nullable = false, updatable = false)
     private Instant transitionedAt;
+
+    @LastModifiedDate
+    @Column(name = "last_modified_date", nullable = false)
+    private Instant lastModifiedDate;
+
+    @CreatedBy
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 100)
+    private String lastModifiedBy;
 
     // Constructors
     public SubscriptionTransitionLog() {
@@ -122,6 +139,30 @@ public class SubscriptionTransitionLog {
 
     public Instant getTransitionedAt() {
         return transitionedAt;
+    }
+
+    public Instant getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(Instant lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 
     /**

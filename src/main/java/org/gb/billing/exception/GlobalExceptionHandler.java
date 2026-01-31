@@ -231,6 +231,34 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle payment failed errors.
+     * Returns HTTP 402 Payment Required.
+     */
+    @ExceptionHandler(PaymentFailedException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentFailed(
+            PaymentFailedException ex, HttpServletRequest request) {
+        logger.warn("Payment failed: {}", ex.getMessage());
+        
+        ErrorResponse error = createErrorResponse(HttpStatus.PAYMENT_REQUIRED, "Payment Required", "PAYMENT_FAILED", ex.getMessage(), request);
+        
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(error);
+    }
+
+    /**
+     * Handle payment not found errors.
+     * Returns HTTP 404 Not Found.
+     */
+    @ExceptionHandler(PaymentNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentNotFound(
+            PaymentNotFoundException ex, HttpServletRequest request) {
+        logger.warn("Payment not found: {}", ex.getMessage());
+        
+        ErrorResponse error = createErrorResponse(HttpStatus.NOT_FOUND, "Not Found", "PAYMENT_NOT_FOUND", ex.getMessage(), request);
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
      * Handle security access denied exceptions.
      * Returns HTTP 403 Forbidden.
      */

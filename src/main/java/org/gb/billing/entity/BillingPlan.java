@@ -3,6 +3,9 @@ package org.gb.billing.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,6 +41,7 @@ import java.util.UUID;
            @Index(name = "idx_billing_plan_active", columnList = "is_active"),
            @Index(name = "idx_billing_plan_name", columnList = "name")
        })
+@EntityListeners(AuditingEntityListener.class)
 public class BillingPlan {
 
     @Id
@@ -73,6 +77,14 @@ public class BillingPlan {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @CreatedBy
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 100)
+    private String lastModifiedBy;
 
     // Constructors
     public BillingPlan() {
@@ -158,6 +170,22 @@ public class BillingPlan {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 
     // Business Methods

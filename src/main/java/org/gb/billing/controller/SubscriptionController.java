@@ -76,8 +76,9 @@ public class SubscriptionController {
     })
     public ResponseEntity<SubscriptionResponse> createSubscription(
             @Valid @RequestBody SubscribeRequest request,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.info("User {} subscribing to plan {}", user.getId(), request.getPlanId());
 
         Long userId = user.getId();
@@ -105,8 +106,9 @@ public class SubscriptionController {
                      content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<SubscriptionResponse> getMySubscription(
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.debug("Fetching subscription for user {}", user.getId());
 
         Long userId = user.getId();
@@ -141,8 +143,9 @@ public class SubscriptionController {
     public ResponseEntity<SubscriptionResponse> getSubscriptionById(
             @Parameter(description = "Subscription UUID", required = true)
             @PathVariable UUID id,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.debug("Fetching subscription {} for user {}", id, user.getId());
 
         Long tenantId = user.getTenantId();
@@ -177,8 +180,9 @@ public class SubscriptionController {
             @Parameter(description = "Subscription UUID", required = true)
             @PathVariable UUID id,
             @Valid @RequestBody org.gb.billing.dto.request.UpgradeRequest request,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.info("User {} upgrading subscription {} to plan {}", user.getId(), id, request.getNewPlanId());
 
         Long tenantId = user.getTenantId();
@@ -211,8 +215,9 @@ public class SubscriptionController {
     public ResponseEntity<Void> cancelSubscription(
             @Parameter(description = "Subscription UUID", required = true)
             @PathVariable UUID id,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.info("User {} canceling subscription {}", user.getId(), id);
 
         Long userId = user.getId();
@@ -242,8 +247,9 @@ public class SubscriptionController {
     public ResponseEntity<java.util.List<org.gb.billing.entity.SubscriptionTransitionLog>> getTransitionHistory(
             @Parameter(description = "Subscription UUID", required = true)
             @PathVariable UUID id,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
         
+        User user = getUserFromAuthentication(authentication);
         logger.debug("Fetching transition history for subscription {} and user {}", id, user.getId());
 
         Long tenantId = user.getTenantId();
@@ -252,6 +258,21 @@ public class SubscriptionController {
             subscriptionService.getTransitionHistory(id, tenantId);
 
         return ResponseEntity.ok(history);
+    }
+
+    /**
+     * Helper method to extract User from Authentication.
+     * Supports both JWT authentication and test mock authentication.
+     */
+    private User getUserFromAuthentication(Authentication authentication) {
+        if (authentication == null || authentication.getPrincipal() == null) {
+            throw new IllegalStateException("No authenticated user found");
+        }
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof User) {
+            return (User) principal;
+        }
+        throw new IllegalStateException("Principal is not a User instance: " + principal.getClass());
     }
 }
 

@@ -3,6 +3,9 @@ package org.gb.billing.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -28,6 +31,7 @@ import java.util.UUID;
            name = "unique_plan_limit_type",
            columnNames = {"plan_id", "limit_type"}
        ))
+@EntityListeners(AuditingEntityListener.class)
 public class FeatureLimit {
 
     @Id
@@ -52,6 +56,14 @@ public class FeatureLimit {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @CreatedBy
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 100)
+    private String lastModifiedBy;
 
     // Constructors
     public FeatureLimit() {
@@ -101,6 +113,22 @@ public class FeatureLimit {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 
     /**

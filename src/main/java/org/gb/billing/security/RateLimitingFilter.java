@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.gb.billing.entity.BillingPlan;
 import org.gb.billing.entity.Subscription;
+import org.gb.billing.entity.User;
 import org.gb.billing.exception.RateLimitExceededException;
 import org.gb.billing.service.SubscriptionService;
 import org.springframework.security.core.Authentication;
@@ -66,14 +67,29 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         
         // Skip rate limiting for unauthenticated requests (will be handled by security)
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+        if (auth == null || auth.getPrincipal() == null) {
             filterChain.doFilter(request, response);
             return;
         }
         
-        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
-        Long userId = userDetails.getUserId();
-        Long tenantId = userDetails.getTenantId();
+        Long userId;
+        Long tenantId;
+        
+        // Extract userId and tenantId from principal (supports both CustomUserDetails and User)
+        Object principal = auth.getPrincipal();
+        if (principal instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) principal;
+            userId = userDetails.getUserId();
+            tenantId = userDetails.getTenantId();
+        } else if (principal instanceof User) {
+            User user = (User) principal;
+            userId = user.getId();
+            tenantId = user.getTenantId();
+        } else {
+            // Unknown principal type, skip rate limiting
+            filterChain.doFilter(request, response);
+            return;
+        }
         
         // Get user's active subscription to determine plan (Cached)
         Optional<Subscription> subscriptionOpt = subscriptionService.getMySubscription(userId, tenantId);

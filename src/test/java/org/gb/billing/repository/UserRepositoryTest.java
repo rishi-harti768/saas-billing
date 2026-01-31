@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
@@ -17,17 +18,21 @@ import static org.assertj.core.api.Assertions.*;
  * Tests User Story 1: Database operations for user management.
  */
 @DataJpaTest
+@ActiveProfiles("test")
 @DisplayName("UserRepository Tests")
 class UserRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
 
+    // Valid BCrypt hash for password "password"
+    private static final String BCRYPT_PASSWORD = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
     @Test
     @DisplayName("Should find user by email when exists")
     void testFindByEmail_UserExists() {
         // Arrange
-        User user = new User("test@example.com", "hashedPassword", Role.ROLE_ADMIN);
+        User user = new User("test@example.com", BCRYPT_PASSWORD, Role.ROLE_ADMIN);
         userRepository.save(user);
 
         // Act
@@ -53,8 +58,8 @@ class UserRepositoryTest {
     @DisplayName("Should enforce unique email constraint")
     void testSave_DuplicateEmail() {
         // Arrange
-        User user1 = new User("duplicate@example.com", "password1", Role.ROLE_ADMIN);
-        User user2 = new User("duplicate@example.com", "password2", Role.ROLE_ADMIN);
+        User user1 = new User("duplicate@example.com", BCRYPT_PASSWORD, Role.ROLE_ADMIN);
+        User user2 = new User("duplicate@example.com", BCRYPT_PASSWORD, Role.ROLE_ADMIN);
         
         userRepository.save(user1);
         userRepository.flush();
@@ -70,7 +75,7 @@ class UserRepositoryTest {
     @DisplayName("Should increment version on update (optimistic locking)")
     void testOptimisticLocking_VersionIncrement() {
         // Arrange
-        User user = new User("version@example.com", "password", Role.ROLE_ADMIN);
+        User user = new User("version@example.com", BCRYPT_PASSWORD, Role.ROLE_ADMIN);
         user.setFirstName("John");
         User saved = userRepository.save(user);
         Long initialVersion = saved.getVersion();
@@ -87,7 +92,7 @@ class UserRepositoryTest {
     @DisplayName("Should save user with all fields correctly")
     void testSave_AllFields() {
         // Arrange
-        User user = new User("complete@example.com", "hashedPassword", Role.ROLE_ADMIN);
+        User user = new User("john.doe@example.com", BCRYPT_PASSWORD, Role.ROLE_USER);
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setActive(true);
@@ -97,9 +102,9 @@ class UserRepositoryTest {
 
         // Assert
         assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getEmail()).isEqualTo("complete@example.com");
-        assertThat(saved.getPassword()).isEqualTo("hashedPassword");
-        assertThat(saved.getRole()).isEqualTo(Role.ROLE_ADMIN);
+        assertThat(saved.getEmail()).isEqualTo("john.doe@example.com");
+        assertThat(saved.getPassword()).isEqualTo(BCRYPT_PASSWORD);
+        assertThat(saved.getRole()).isEqualTo(Role.ROLE_USER);
         assertThat(saved.getFirstName()).isEqualTo("John");
         assertThat(saved.getLastName()).isEqualTo("Doe");
         assertThat(saved.getActive()).isTrue();

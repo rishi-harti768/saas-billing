@@ -3,6 +3,9 @@ package org.gb.billing.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -38,6 +41,7 @@ import java.util.UUID;
            @Index(name = "idx_subscription_plan_id", columnList = "plan_id"),
            @Index(name = "idx_subscription_next_billing", columnList = "next_billing_date")
        })
+@EntityListeners(AuditingEntityListener.class)
 public class Subscription {
 
     @Id
@@ -68,6 +72,15 @@ public class Subscription {
     @Column(name = "canceled_at")
     private Instant canceledAt;
 
+    @Column(name = "gateway_subscription_id", length = 255)
+    private String gatewaySubscriptionId;
+
+    @Column(name = "gateway_customer_id", length = 255)
+    private String gatewayCustomerId;
+
+    @Column(name = "last_payment_date")
+    private Instant lastPaymentDate;
+
     @Version
     @Column(name = "version", nullable = false)
     private Integer version = 0;
@@ -79,6 +92,14 @@ public class Subscription {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @CreatedBy
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 100)
+    private String lastModifiedBy;
 
     // Constructors
     public Subscription() {
@@ -158,6 +179,30 @@ public class Subscription {
         this.canceledAt = canceledAt;
     }
 
+    public String getGatewaySubscriptionId() {
+        return gatewaySubscriptionId;
+    }
+
+    public void setGatewaySubscriptionId(String gatewaySubscriptionId) {
+        this.gatewaySubscriptionId = gatewaySubscriptionId;
+    }
+
+    public String getGatewayCustomerId() {
+        return gatewayCustomerId;
+    }
+
+    public void setGatewayCustomerId(String gatewayCustomerId) {
+        this.gatewayCustomerId = gatewayCustomerId;
+    }
+
+    public Instant getLastPaymentDate() {
+        return lastPaymentDate;
+    }
+
+    public void setLastPaymentDate(Instant lastPaymentDate) {
+        this.lastPaymentDate = lastPaymentDate;
+    }
+
     public Integer getVersion() {
         return version;
     }
@@ -172,6 +217,22 @@ public class Subscription {
 
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 
     // Business Methods

@@ -9,10 +9,16 @@ import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.FilterDef;
 import org.hibernate.annotations.ParamDef;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -80,6 +86,14 @@ public class User {
     @LastModifiedDate
     @Column(nullable = false, name = "last_modified_date")
     private LocalDateTime lastModifiedDate;
+
+    @CreatedBy
+    @Column(name = "created_by", length = 100)
+    private String createdBy;
+
+    @LastModifiedBy
+    @Column(name = "last_modified_by", length = 100)
+    private String lastModifiedBy;
 
     @Column(name = "last_login_date")
     private LocalDateTime lastLoginDate;
@@ -180,6 +194,22 @@ public class User {
         this.lastModifiedDate = lastModifiedDate;
     }
 
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+    }
+
     public LocalDateTime getLastLoginDate() {
         return lastLoginDate;
     }
@@ -199,6 +229,11 @@ public class User {
     // Helper method to get tenantId
     public Long getTenantId() {
         return tenant != null ? tenant.getId() : null;
+    }
+
+    // Helper method to get Spring Security authorities
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority(role.name()));
     }
 
     // equals, hashCode, toString

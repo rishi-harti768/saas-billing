@@ -17,11 +17,28 @@ spring:
   
   flyway:
     enabled: false  # Disable Flyway for tests, use ddl-auto instead
+  
+  # Mail configuration for tests
+  mail:
+    host: localhost
+    port: 3025
+    enabled: false  # Disable email sending in tests
 
 # JWT Configuration for tests
 jwt:
   secret: TEST_SECRET_KEY_FOR_UNIT_TESTS_ONLY_DO_NOT_USE_IN_PRODUCTION
   expiration: 86400000
+
+# Stripe configuration for tests
+stripe:
+  api:
+    key: sk_test_mock_key_for_testing
+  enabled: false  # Disable Stripe in tests
+
+# Invoice configuration for tests
+invoice:
+  storage:
+    path: ./target/test-invoices
 
 # Logging for tests
 logging:

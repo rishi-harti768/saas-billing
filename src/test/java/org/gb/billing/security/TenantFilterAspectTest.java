@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.*;
  * Tests User Story 2: Multi-tenant data isolation.
  */
 @DataJpaTest
+@ActiveProfiles("test")
 @Import(TenantFilterAspect.class)
 @DisplayName("TenantFilterAspect Integration Tests")
 class TenantFilterAspectTest {
@@ -43,6 +45,9 @@ class TenantFilterAspectTest {
     private User user1Tenant2;
     private User adminUser;
 
+    // Valid BCrypt hash for password "password"
+    private static final String BCRYPT_PASSWORD = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
     @BeforeEach
     void setUp() {
         // Create tenants
@@ -52,21 +57,21 @@ class TenantFilterAspectTest {
         tenantRepository.save(tenant2);
 
         // Create users for tenant 1
-        user1Tenant1 = new User("user1@tenant1.com", "password", Role.ROLE_USER);
+        user1Tenant1 = new User("user1@tenant1.com", BCRYPT_PASSWORD, Role.ROLE_USER);
         user1Tenant1.setTenant(tenant1);
         userRepository.save(user1Tenant1);
 
-        user2Tenant1 = new User("user2@tenant1.com", "password", Role.ROLE_USER);
+        user2Tenant1 = new User("user2@tenant1.com", BCRYPT_PASSWORD, Role.ROLE_USER);
         user2Tenant1.setTenant(tenant1);
         userRepository.save(user2Tenant1);
 
         // Create user for tenant 2
-        user1Tenant2 = new User("user1@tenant2.com", "password", Role.ROLE_USER);
+        user1Tenant2 = new User("user1@tenant2.com", BCRYPT_PASSWORD, Role.ROLE_USER);
         user1Tenant2.setTenant(tenant2);
         userRepository.save(user1Tenant2);
 
         // Create admin user (no tenant)
-        adminUser = new User("admin@system.com", "password", Role.ROLE_ADMIN);
+        adminUser = new User("admin@system.com", BCRYPT_PASSWORD, Role.ROLE_ADMIN);
         userRepository.save(adminUser);
 
         entityManager.flush();

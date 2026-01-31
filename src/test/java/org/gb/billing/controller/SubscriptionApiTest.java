@@ -2,7 +2,9 @@ package org.gb.billing.controller;
 
 import org.gb.billing.config.SecurityConfig;
 import org.gb.billing.config.CorsConfig;
+import org.gb.billing.security.WithMockCustomUser;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gb.billing.dto.request.SubscribeRequest;
@@ -17,7 +19,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -29,11 +30,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SubscriptionController.class)
 @Import({SecurityConfig.class, CorsConfig.class})
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class SubscriptionApiTest {
 
     @Autowired
@@ -58,7 +61,7 @@ class SubscriptionApiTest {
     private org.gb.billing.security.CustomUserDetailsService userDetailsService;
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldCreateSubscription() throws Exception {
         UUID planId = UUID.randomUUID();
         Long userId = 1L;
@@ -84,7 +87,7 @@ class SubscriptionApiTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldGetMySubscription() throws Exception {
         Long userId = 1L;
         Long tenantId = 1L;
@@ -101,7 +104,7 @@ class SubscriptionApiTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldReturn404WhenNoActiveSubscription() throws Exception {
         when(subscriptionService.getMySubscription(any(), any())).thenReturn(Optional.empty());
 
@@ -110,7 +113,7 @@ class SubscriptionApiTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldGetSubscriptionById() throws Exception {
         UUID subscriptionId = UUID.randomUUID();
         Long userId = 1L;
@@ -134,7 +137,7 @@ class SubscriptionApiTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldReturn400WhenInvalidSubscribeRequest() throws Exception {
         SubscribeRequest request = new SubscribeRequest();
 
@@ -146,23 +149,34 @@ class SubscriptionApiTest {
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldUpgradeSubscription() throws Exception {
         UUID subscriptionId = UUID.randomUUID();
         UUID newPlanId = UUID.randomUUID();
+        Long tenantId = 1L;
         
         UpgradeRequest request = new UpgradeRequest();
         request.setNewPlanId(newPlanId);
+
+        BillingPlan newPlan = new BillingPlan("Enterprise", "Enterprise tier", new BigDecimal("99.99"), BillingCycle.MONTHLY);
+        newPlan.setId(newPlanId);
+
+        Subscription upgradedSubscription = new Subscription(1L, tenantId, newPlan);
+        upgradedSubscription.setId(subscriptionId);
+
+        when(subscriptionService.upgradeSubscription(eq(subscriptionId), eq(tenantId), eq(newPlanId)))
+                .thenReturn(upgradedSubscription);
 
         mockMvc.perform(put("/api/v1/subscriptions/{id}/upgrade", subscriptionId)
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+                .andDo(print())
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockCustomUser(id = 1L, email = "user1@example.com", tenantId = 1L)
     void shouldCancelSubscription() throws Exception {
         UUID subscriptionId = UUID.randomUUID();
 

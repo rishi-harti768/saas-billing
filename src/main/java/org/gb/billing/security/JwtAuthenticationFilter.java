@@ -54,11 +54,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.debug("Set tenant context: tenantId={}", tenantId);
                 }
                 
-                // Create authentication token
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                // Create CustomUserDetails as principal (contains userId and tenantId for rate limiting)
+                CustomUserDetails userDetails = new CustomUserDetails(
+                        userId,
                         email,
+                        null,  // No password needed for JWT authentication
+                        role,
+                        tenantId,
+                        true   // Assume active if token is valid
+                );
+                
+                // Create authentication token with CustomUserDetails as principal
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority(role))
+                        userDetails.getAuthorities()
                 );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 
