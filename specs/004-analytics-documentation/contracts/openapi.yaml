@@ -1,0 +1,63 @@
+  openapi: 3.0.0
+info:
+  title: Analytics API
+  version: 1.0.0
+paths:
+  /api/v1/analytics/mrr:
+    get:
+      summary: Get Monthly Recurring Revenue
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MrrStats'
+        '403':
+          description: Forbidden (Non-Admin)
+  /api/v1/analytics/churn:
+    get:
+      summary: Get Churn Rate
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChurnStats'
+        '403':
+          description: Forbidden (Non-Admin)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    MrrStats:
+      type: object
+      properties:
+        totalMrr:
+          type: number
+        monthlyBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+              amount:
+                type: number
+    ChurnStats:
+      type: object
+      properties:
+        totalSubscribers:
+          type: integer
+        cancelledSubscribers:
+          type: integer
+        churnRatePercentage:
+          type: number

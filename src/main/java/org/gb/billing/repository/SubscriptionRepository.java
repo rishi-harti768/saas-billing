@@ -157,4 +157,17 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
            "GROUP BY CAST(canceled_at AS DATE)", nativeQuery = true)
     List<Object[]> countCanceledSubscriptionsByDate(@Param("tenantId") Long tenantId, @Param("startDate") Instant startDate);
 
+    @Query("SELECT TO_CHAR(s.startDate, 'YYYY-MM') as period, SUM(s.plan.price) as amount " +
+           "FROM Subscription s " +
+           "WHERE s.status = 'ACTIVE' " +
+           "GROUP BY TO_CHAR(s.startDate, 'YYYY-MM') " +
+           "ORDER BY period DESC")
+    List<RevenueStats> calculateMonthlyRevenue();
+
+    @Query("SELECT COUNT(s) FROM Subscription s")
+    long countTotalSubscriptions();
+
+    @Query("SELECT COUNT(s) FROM Subscription s WHERE s.status = 'CANCELED'")
+    long countCancelledSubscriptions();
+
 }

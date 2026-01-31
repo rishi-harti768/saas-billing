@@ -1,6 +1,14 @@
 package org.gb.billing.service;
 
-import org.gb.billing.dto.response.*;
+import org.gb.billing.dto.ChurnStats;
+import org.gb.billing.dto.MrrStats;
+import org.gb.billing.dto.RevenueStats;
+import org.gb.billing.dto.response.ChurnRateResponse;
+import org.gb.billing.dto.response.RevenueSummaryResponse;
+import org.gb.billing.dto.response.SubscriptionCountByPlan;
+import org.gb.billing.dto.response.SubscriptionCountByStatus;
+import org.gb.billing.dto.response.SubscriptionGrowthData;
+import org.gb.billing.dto.response.RevenueByPlan;
 import org.gb.billing.entity.BillingCycle;
 import org.gb.billing.entity.BillingPlan;
 import org.gb.billing.entity.SubscriptionState;
@@ -213,5 +221,31 @@ public class AnalyticsService {
         BigDecimal arr = mrr.multiply(BigDecimal.valueOf(12));
         
         return new RevenueSummaryResponse(mrr, arr, revenueByPlanList);
+    }
+    
+    // US1 Methods
+
+    @Transactional(readOnly = true)
+    public MrrStats getMrrStats() {
+        List<RevenueStats> monthlyBreakdown = subscriptionRepository.calculateMonthlyRevenue();
+        
+        BigDecimal totalMrr = monthlyBreakdown.stream()
+                .map(RevenueStats::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new MrrStats(totalMrr, monthlyBreakdown);
+    }
+
+    @Transactional(readOnly = true)
+    public ChurnStats getChurnStats() {
+        long totalSubscriptions = subscriptionRepository.countTotalSubscriptions();
+        long cancelledSubscriptions = subscriptionRepository.countCancelledSubscriptions();
+
+        double churnRate = 0.0;
+        if (totalSubscriptions > 0) {
+            churnRate = (double) cancelledSubscriptions / totalSubscriptions * 100;
+        }
+
+        return new ChurnStats(totalSubscriptions, cancelledSubscriptions, churnRate);
     }
 }
