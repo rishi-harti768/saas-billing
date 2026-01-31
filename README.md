@@ -373,7 +373,6 @@ This project is proprietary and confidential.
 
 For issues or questions:
 
-- **Email**: support@billing.com
 - **Documentation**: `/swagger-ui.html`
 - **Health Check**: `/actuator/health`
 
