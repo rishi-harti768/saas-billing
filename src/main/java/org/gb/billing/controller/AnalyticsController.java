@@ -40,44 +40,44 @@ public class AnalyticsController {
     @GetMapping("/subscriptions/by-plan")
     @Operation(summary = "Get active subscriptions by plan")
     public ResponseEntity<List<SubscriptionCountByPlan>> getSubscriptionCountByPlan(@AuthenticationPrincipal User user) {
-        UUID tenantId = getTenantId(user);
+        Long tenantId = getTenantId(user);
         return ResponseEntity.ok(analyticsService.getSubscriptionCountByPlan(tenantId));
     }
 
     @GetMapping("/subscriptions/by-status")
     @Operation(summary = "Get subscriptions by status")
     public ResponseEntity<List<SubscriptionCountByStatus>> getSubscriptionCountByStatus(@AuthenticationPrincipal User user) {
-        UUID tenantId = getTenantId(user);
+        Long tenantId = getTenantId(user);
         return ResponseEntity.ok(analyticsService.getSubscriptionCountByStatus(tenantId));
     }
 
     @GetMapping("/churn-rate")
     @Operation(summary = "Get churn rate (last 30 days)")
     public ResponseEntity<ChurnRateResponse> getChurnRate(@AuthenticationPrincipal User user) {
-        UUID tenantId = getTenantId(user);
+        Long tenantId = getTenantId(user);
         return ResponseEntity.ok(analyticsService.calculateChurnRate(tenantId));
     }
 
     @GetMapping("/subscription-growth")
     @Operation(summary = "Get subscription growth trends (last 30 days)")
     public ResponseEntity<List<SubscriptionGrowthData>> getSubscriptionGrowth(@AuthenticationPrincipal User user) {
-        UUID tenantId = getTenantId(user);
+        Long tenantId = getTenantId(user);
         return ResponseEntity.ok(analyticsService.getSubscriptionGrowth(tenantId));
     }
 
     @GetMapping("/revenue-summary")
     @Operation(summary = "Get revenue summary (MRR/ARR)")
     public ResponseEntity<RevenueSummaryResponse> getRevenueSummary(@AuthenticationPrincipal User user) {
-        UUID tenantId = getTenantId(user);
+        Long tenantId = getTenantId(user);
         return ResponseEntity.ok(analyticsService.getRevenueSummary(tenantId));
     }
 
-    private UUID getTenantId(User user) {
+    private Long getTenantId(User user) {
         if (user.getTenantId() == null) {
              // For safety, though users should have tenantId. Admin might be system admin? 
              // Assuming tenant-scoped admin for now.
              throw new IllegalStateException("User does not belong to a tenant");
         }
-        return UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes());
+        return user.getTenantId();
     }
 }

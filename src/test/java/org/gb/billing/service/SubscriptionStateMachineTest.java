@@ -26,18 +26,18 @@ class SubscriptionStateMachineTest {
     @Mock
     private SubscriptionTransitionLogRepository transitionLogRepository;
 
-    @InjectMocks
     private SubscriptionStateMachine stateMachine;
 
     private Subscription subscription;
-    private UUID userId;
+    private Long userId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
+        userId = 1L;
         subscription = new Subscription();
         subscription.setId(UUID.randomUUID());
         subscription.setStatus(SubscriptionState.ACTIVE);
+        stateMachine = new SubscriptionStateMachine(transitionLogRepository);
     }
 
     @Test

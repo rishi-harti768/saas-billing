@@ -1,0 +1,471 @@
+openapi: 3.0.3
+info:
+  title: SaaS Billing Engine - Payment Integration API
+  description: |
+    REST API for external payment gateway integration (Stripe) supporting subscription payments, 
+    webhook processing, and payment history management.
+    
+    **Authentication**: All endpoints except webhooks require JWT authentication via Bearer token.
+    
+    **Base URL**: `/api/v1`
+  version: 1.0.0
+  contact:
+    name: SaaS Billing Team
+    email: billing@example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://staging.billing.example.com/api/v1
+    description: Staging environment
+  - url: https://api.billing.example.com/api/v1
+    description: Production environment
+
+tags:
+  - name: Payments
+    description: Payment initiation and management endpoints
+  - name: Webhooks
+    description: Payment gateway webhook endpoints
+  - name: Payment History
+    description: Payment transaction history and details
+
+paths:
+  /payments/initiate:
+    post:
+      tags:
+        - Payments
+      summary: Initiate payment for subscription
+      description: |
+        Creates a payment intent with the payment gateway and returns a redirect URL for the user 
+        to complete payment. Requires authenticated user with valid subscription.
+      operationId: initiatePayment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInitiationRequest'
+            examples:
+              monthlyPro:
+                summary: Monthly Pro Plan Payment
+                value:
+                  subscriptionId: 123
+                  planId: "pro-monthly"
+                  returnUrl: "https://app.example.com/payment/success"
+                  cancelUrl: "https://app.example.com/payment/cancel"
+      responses:
+        '200':
+          description: Payment initiation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              examples:
+                success:
+                  summary: Successful payment initiation
+                  value:
+                    paymentIntentId: "pi_1234567890"
+                    redirectUrl: "https://checkout.stripe.com/pay/cs_test_1234"
+                    status: "PENDING"
+                    amount: 29.99
+                    currency: "USD"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidSubscription:
+                  summary: Invalid subscription ID
+                  value:
+                    error: "BAD_REQUEST"
+                    message: "Subscription not found or not owned by user"
+                    timestamp: "2026-01-25T20:00:00Z"
+                    path: "/api/v1/payments/initiate"
+        '401':
+          description: Unauthorized - Invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /webhooks/stripe:
+    post:
+      tags:
+        - Webhooks
+      summary: Receive Stripe webhook events
+      description: |
+        Endpoint for receiving webhook events from Stripe payment gateway. 
+        Verifies webhook signature and processes payment status updates.
+        
+        **Security**: This endpoint does NOT require JWT authentication but MUST verify 
+        the Stripe-Signature header for authenticity.
+      operationId: handleStripeWebhook
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          description: Stripe webhook signature for verification
+          schema:
+            type: string
+          example: "t=1614556800,v1=abc123def456..."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPayload'
+            examples:
+              paymentSucceeded:
+                summary: Payment Intent Succeeded
+                value:
+                  id: "evt_1234567890"
+                  type: "payment_intent.succeeded"
+                  data:
+                    object:
+                      id: "pi_1234567890"
+                      amount: 2999
+                      currency: "usd"
+                      status: "succeeded"
+                      metadata:
+                        subscriptionId: "123"
+              paymentFailed:
+                summary: Payment Intent Failed
+                value:
+                  id: "evt_0987654321"
+                  type: "payment_intent.payment_failed"
+                  data:
+                    object:
+                      id: "pi_0987654321"
+                      amount: 2999
+                      currency: "usd"
+                      status: "failed"
+                      last_payment_error:
+                        message: "Your card was declined"
+                      metadata:
+                        subscriptionId: "123"
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid webhook signature or malformed payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Webhook processing failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payments/history:
+    get:
+      tags:
+        - Payment History
+      summary: Get payment transaction history
+      description: |
+        Retrieves paginated payment transaction history for the authenticated user's subscriptions.
+        Results are sorted by creation date (newest first).
+      operationId: getPaymentHistory
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by payment status
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, SUCCESS, FAILED, REFUNDED, CANCELED]
+      responses:
+        '200':
+          description: Payment history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentHistoryResponse'
+              examples:
+                success:
+                  summary: Payment history with multiple transactions
+                  value:
+                    content:
+                      - id: 1
+                        paymentGatewayTransactionId: "pi_1234567890"
+                        amount: 29.99
+                        currency: "USD"
+                        status: "SUCCESS"
+                        paymentMethod: "CARD"
+                        createdDate: "2026-01-25T10:00:00Z"
+                      - id: 2
+                        paymentGatewayTransactionId: "pi_0987654321"
+                        amount: 29.99
+                        currency: "USD"
+                        status: "FAILED"
+                        paymentMethod: "CARD"
+                        failureReason: "Card declined"
+                        createdDate: "2026-01-20T10:00:00Z"
+                    page:
+                      number: 0
+                      size: 20
+                      totalElements: 2
+                      totalPages: 1
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payments/{transactionId}:
+    get:
+      tags:
+        - Payment History
+      summary: Get payment transaction details
+      description: Retrieves detailed information about a specific payment transaction
+      operationId: getPaymentDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: Payment transaction ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Payment details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTransactionDetails'
+        '404':
+          description: Payment transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /api/v1/auth/login endpoint
+
+  schemas:
+    PaymentInitiationRequest:
+      type: object
+      required:
+        - subscriptionId
+        - planId
+        - returnUrl
+        - cancelUrl
+      properties:
+        subscriptionId:
+          type: integer
+          format: int64
+          description: ID of the subscription to pay for
+          example: 123
+        planId:
+          type: string
+          description: Billing plan identifier
+          example: "pro-monthly"
+        returnUrl:
+          type: string
+          format: uri
+          description: URL to redirect user after successful payment
+          example: "https://app.example.com/payment/success"
+        cancelUrl:
+          type: string
+          format: uri
+          description: URL to redirect user if payment is canceled
+          example: "https://app.example.com/payment/cancel"
+
+    PaymentResponse:
+      type: object
+      properties:
+        paymentIntentId:
+          type: string
+          description: Payment intent ID from payment gateway
+          example: "pi_1234567890"
+        redirectUrl:
+          type: string
+          format: uri
+          description: URL to redirect user for payment completion
+          example: "https://checkout.stripe.com/pay/cs_test_1234"
+        status:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED]
+          description: Current payment status
+          example: "PENDING"
+        amount:
+          type: number
+          format: double
+          description: Payment amount
+          example: 29.99
+        currency:
+          type: string
+          description: ISO 4217 currency code
+          example: "USD"
+
+    WebhookPayload:
+      type: object
+      description: Stripe webhook event payload
+      properties:
+        id:
+          type: string
+          description: Unique event ID
+          example: "evt_1234567890"
+        type:
+          type: string
+          description: Event type
+          example: "payment_intent.succeeded"
+        data:
+          type: object
+          description: Event data containing payment details
+          properties:
+            object:
+              type: object
+              description: Payment intent or subscription object
+
+    PaymentHistoryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentTransactionSummary'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    PaymentTransactionSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        paymentGatewayTransactionId:
+          type: string
+          example: "pi_1234567890"
+        amount:
+          type: number
+          format: double
+          example: 29.99
+        currency:
+          type: string
+          example: "USD"
+        status:
+          type: string
+          enum: [PENDING, SUCCESS, FAILED, REFUNDED, CANCELED]
+          example: "SUCCESS"
+        paymentMethod:
+          type: string
+          enum: [CARD, BANK_TRANSFER, WALLET, OTHER]
+          example: "CARD"
+        failureReason:
+          type: string
+          nullable: true
+          example: null
+        createdDate:
+          type: string
+          format: date-time
+          example: "2026-01-25T10:00:00Z"
+
+    PaymentTransactionDetails:
+      allOf:
+        - $ref: '#/components/schemas/PaymentTransactionSummary'
+        - type: object
+          properties:
+            subscriptionId:
+              type: integer
+              format: int64
+              example: 123
+            metadata:
+              type: object
+              description: Additional metadata from payment gateway
+            lastModifiedDate:
+              type: string
+              format: date-time
+              example: "2026-01-25T10:05:00Z"
+
+    PageInfo:
+      type: object
+      properties:
+        number:
+          type: integer
+          description: Current page number (0-indexed)
+          example: 0
+        size:
+          type: integer
+          description: Number of items per page
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of items across all pages
+          example: 42
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 3
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "BAD_REQUEST"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Subscription not found or not owned by user"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when error occurred
+          example: "2026-01-25T20:00:00Z"
+        path:
+          type: string
+          description: API path that generated the error
+          example: "/api/v1/payments/initiate"

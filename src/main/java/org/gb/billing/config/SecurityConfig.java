@@ -1,6 +1,7 @@
 package org.gb.billing.config;
 
 import org.gb.billing.security.JwtAuthenticationFilter;
+import org.gb.billing.security.RateLimitingFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -24,11 +25,14 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
     
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, 
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                         RateLimitingFilter rateLimitingFilter,
                          CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
@@ -38,6 +42,7 @@ public class SecurityConfig {
      * - Permits /api/v1/auth/** endpoints (registration, login)
      * - Requires authentication for all other endpoints
      * - Disables CSRF (stateless API)
+     * - Adds rate limiting filter before JWT authentication
      * - Adds JWT authentication filter
      */
     @Bean
@@ -52,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated()
                 )
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();

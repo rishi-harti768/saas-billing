@@ -98,7 +98,7 @@ public class SubscriptionStateMachine {
      */
     @Transactional
     public void transitionTo(Subscription subscription, SubscriptionState toState, 
-                            String reason, UUID transitionedBy) {
+                            String reason, Long transitionedBy) {
         SubscriptionState fromState = subscription.getStatus();
         
         // Validate transition
@@ -128,7 +128,7 @@ public class SubscriptionStateMachine {
      * @param createdBy the user ID who created the subscription
      */
     @Transactional
-    public void logInitialCreation(Subscription subscription, UUID createdBy) {
+    public void logInitialCreation(Subscription subscription, Long createdBy) {
         SubscriptionTransitionLog log = new SubscriptionTransitionLog(
             subscription.getId(),
             null, // fromStatus is null for initial creation
@@ -170,7 +170,7 @@ public class SubscriptionStateMachine {
      * @param toPlan the new plan
      */
     @Transactional
-    public void logUpgrade(Subscription subscription, org.gb.billing.entity.BillingPlan fromPlan, org.gb.billing.entity.BillingPlan toPlan, UUID userId) {
+    public void logUpgrade(Subscription subscription, org.gb.billing.entity.BillingPlan fromPlan, org.gb.billing.entity.BillingPlan toPlan, Long userId) {
         SubscriptionTransitionLog log = new SubscriptionTransitionLog(
             subscription.getId(),
             subscription.getStatus(),

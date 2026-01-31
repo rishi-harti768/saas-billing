@@ -35,13 +35,21 @@ public class CacheConfig {
      */
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("plans", "analytics");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager("plans", "analytics", "user-subscriptions");
         
-        // Plans cache: longer TTL for relatively static data
+        // Plans cache: longer TTL for relatively static data (1 hour per spec)
         cacheManager.registerCustomCache("plans", 
             Caffeine.newBuilder()
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(1, TimeUnit.HOURS)
                 .maximumSize(1000)
+                .recordStats()
+                .build());
+
+        // User subscriptions cache: 10 minutes to balance performance and freshness
+        cacheManager.registerCustomCache("user-subscriptions",
+            Caffeine.newBuilder()
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(5000)
                 .recordStats()
                 .build());
         

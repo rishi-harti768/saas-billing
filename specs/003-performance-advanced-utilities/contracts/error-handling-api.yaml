@@ -1,0 +1,374 @@
+openapi: 3.0.3
+info:
+  title: Performance & Advanced Utilities API
+  description: |
+    API contracts for enhanced error handling, rate limiting, and caching features.
+    
+    This specification defines:
+    - Standardized error response format with error codes and timestamps
+    - Rate limiting headers for all API responses
+    - HTTP 429 responses for rate limit violations
+    
+    **Rate Limiting**:
+    - Free plan: 10 requests/minute
+    - Pro plan: 100 requests/minute
+    - Enterprise plan: 1000 requests/minute
+    
+    **Caching**:
+    - Plans endpoint cached for 1 hour
+    - Cache-Control headers included in responses
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@billing.example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.billing.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Error Handling
+    description: Standardized error response formats
+  - name: Rate Limiting
+    description: API rate limiting and throttling
+
+paths:
+  /example:
+    get:
+      summary: Example endpoint showing rate limit headers
+      description: |
+        All API endpoints include rate limiting headers in responses.
+        This is an example showing the standard headers.
+      tags:
+        - Rate Limiting
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response with rate limit headers
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Success"
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  headers:
+    X-RateLimit-Limit:
+      description: Maximum number of requests allowed in the time window
+      schema:
+        type: integer
+        example: 100
+      required: true
+    
+    X-RateLimit-Remaining:
+      description: Number of requests remaining in the current time window
+      schema:
+        type: integer
+        example: 95
+      required: true
+    
+    X-RateLimit-Reset:
+      description: Unix timestamp (seconds) when the rate limit window resets
+      schema:
+        type: integer
+        format: int64
+        example: 1706270400
+      required: true
+    
+    Retry-After:
+      description: Number of seconds to wait before retrying (only in 429 responses)
+      schema:
+        type: integer
+        example: 45
+      required: true
+
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Standardized error response format for all API errors
+      required:
+        - status
+        - error
+        - errorCode
+        - message
+        - timestamp
+        - path
+      properties:
+        status:
+          type: integer
+          description: HTTP status code
+          example: 404
+        error:
+          type: string
+          description: HTTP status text
+          example: "Not Found"
+        errorCode:
+          type: string
+          description: Machine-readable error code for client-side handling
+          example: "SUBSCRIPTION_NOT_FOUND"
+          enum:
+            - SUBSCRIPTION_NOT_FOUND
+            - PLAN_NOT_FOUND
+            - INVALID_CREDENTIALS
+            - TOKEN_EXPIRED
+            - DUPLICATE_EMAIL
+            - DUPLICATE_SUBSCRIPTION
+            - INVALID_STATE_TRANSITION
+            - INVALID_UPGRADE
+            - RATE_LIMIT_EXCEEDED
+            - VALIDATION_ERROR
+            - INTERNAL_SERVER_ERROR
+        message:
+          type: string
+          description: Human-readable error description
+          example: "Subscription with ID abc-123 not found"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the error occurred
+          example: "2026-01-26T10:00:00Z"
+        path:
+          type: string
+          description: API endpoint where the error occurred
+          example: "/api/v1/subscriptions/abc-123"
+        errorId:
+          type: string
+          format: uuid
+          description: Unique error ID for 500 errors (for support correlation)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+          nullable: true
+        errors:
+          type: array
+          description: List of field-level validation errors (only for 400 validation errors)
+          nullable: true
+          items:
+            $ref: '#/components/schemas/FieldError'
+        details:
+          type: object
+          description: Additional context-specific error details
+          nullable: true
+          additionalProperties:
+            type: string
+          example:
+            retryAfter: "60"
+            planName: "Pro"
+    
+    FieldError:
+      type: object
+      description: Detailed validation error for a specific field
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+          description: Name of the field that failed validation
+          example: "email"
+        message:
+          type: string
+          description: Validation error message
+          example: "Email format is invalid"
+        rejectedValue:
+          description: The value that was rejected
+          example: "notanemail"
+          nullable: true
+        example:
+          type: string
+          description: Example of a valid value for this field
+          example: "user@example.com"
+          nullable: true
+
+  responses:
+    RateLimitExceeded:
+      description: Rate limit exceeded - too many requests
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/Retry-After'
+        X-RateLimit-Limit:
+          $ref: '#/components/headers/X-RateLimit-Limit'
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+            example: 0
+        X-RateLimit-Reset:
+          $ref: '#/components/headers/X-RateLimit-Reset'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 429
+            error: "Too Many Requests"
+            errorCode: "RATE_LIMIT_EXCEEDED"
+            message: "API rate limit exceeded. Please try again in 45 seconds."
+            timestamp: "2026-01-26T10:00:00Z"
+            path: "/api/v1/subscriptions"
+            details:
+              retryAfter: "45"
+              limit: "10"
+              planName: "Free"
+    
+    Unauthorized:
+      description: Authentication required or token expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            invalidCredentials:
+              summary: Invalid login credentials
+              value:
+                status: 401
+                error: "Unauthorized"
+                errorCode: "INVALID_CREDENTIALS"
+                message: "Invalid email or password"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/auth/login"
+            expiredToken:
+              summary: Expired JWT token
+              value:
+                status: 401
+                error: "Unauthorized"
+                errorCode: "TOKEN_EXPIRED"
+                message: "JWT token has expired. Please login again."
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/subscriptions"
+    
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            subscriptionNotFound:
+              summary: Subscription not found
+              value:
+                status: 404
+                error: "Not Found"
+                errorCode: "SUBSCRIPTION_NOT_FOUND"
+                message: "Subscription with ID abc-123 not found"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/subscriptions/abc-123"
+            planNotFound:
+              summary: Plan not found
+              value:
+                status: 404
+                error: "Not Found"
+                errorCode: "PLAN_NOT_FOUND"
+                message: "Billing plan with ID xyz-789 not found"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/plans/xyz-789"
+    
+    BadRequest:
+      description: Invalid request or validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validationError:
+              summary: Validation errors
+              value:
+                status: 400
+                error: "Bad Request"
+                errorCode: "VALIDATION_ERROR"
+                message: "Validation failed for one or more fields"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/auth/register"
+                errors:
+                  - field: "email"
+                    message: "Email format is invalid"
+                    rejectedValue: "notanemail"
+                    example: "user@example.com"
+                  - field: "password"
+                    message: "Password must be at least 8 characters"
+                    rejectedValue: "123"
+                    example: "SecurePass123!"
+            invalidStateTransition:
+              summary: Invalid state transition
+              value:
+                status: 400
+                error: "Bad Request"
+                errorCode: "INVALID_STATE_TRANSITION"
+                message: "Cannot transition subscription from CANCELED to ACTIVE"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/subscriptions/abc-123/activate"
+    
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            duplicateEmail:
+              summary: Duplicate email registration
+              value:
+                status: 409
+                error: "Conflict"
+                errorCode: "DUPLICATE_EMAIL"
+                message: "Email user@example.com is already registered"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/auth/register"
+            duplicateSubscription:
+              summary: Duplicate subscription
+              value:
+                status: 409
+                error: "Conflict"
+                errorCode: "DUPLICATE_SUBSCRIPTION"
+                message: "User already has an active subscription to plan Pro"
+                timestamp: "2026-01-26T10:00:00Z"
+                path: "/api/v1/subscriptions"
+    
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 500
+            error: "Internal Server Error"
+            errorCode: "INTERNAL_SERVER_ERROR"
+            message: "An unexpected error occurred. Please try again later."
+            timestamp: "2026-01-26T10:00:00Z"
+            path: "/api/v1/subscriptions"
+            errorId: "550e8400-e29b-41d4-a716-446655440000"
+            details:
+              supportMessage: "Please contact support with error ID if the problem persists"
+
+  examples:
+    RateLimitHeaders:
+      summary: Standard rate limit headers
+      value:
+        X-RateLimit-Limit: 100
+        X-RateLimit-Remaining: 95
+        X-RateLimit-Reset: 1706270400

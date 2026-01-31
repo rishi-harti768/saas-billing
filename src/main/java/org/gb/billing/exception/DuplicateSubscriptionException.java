@@ -12,16 +12,16 @@ import java.util.UUID;
  */
 public class DuplicateSubscriptionException extends RuntimeException {
 
-    private final UUID userId;
+    private final Long userId;
     private final UUID existingSubscriptionId;
 
-    public DuplicateSubscriptionException(UUID userId, UUID existingSubscriptionId) {
+    public DuplicateSubscriptionException(Long userId, UUID existingSubscriptionId) {
         super(String.format("User %s already has an active subscription: %s", userId, existingSubscriptionId));
         this.userId = userId;
         this.existingSubscriptionId = existingSubscriptionId;
     }
 
-    public UUID getUserId() {
+    public Long getUserId() {
         return userId;
     }
 

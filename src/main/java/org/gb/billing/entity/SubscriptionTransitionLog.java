@@ -45,7 +45,7 @@ public class SubscriptionTransitionLog {
     private String reason;
 
     @Column(name = "transitioned_by")
-    private UUID transitionedBy;
+    private Long transitionedBy;
 
     @CreationTimestamp
     @Column(name = "transitioned_at", nullable = false, updatable = false)
@@ -55,7 +55,7 @@ public class SubscriptionTransitionLog {
     public SubscriptionTransitionLog() {
     }
 
-    public SubscriptionTransitionLog(UUID subscriptionId, String fromStatus, String toStatus, String reason, UUID transitionedBy) {
+    public SubscriptionTransitionLog(UUID subscriptionId, String fromStatus, String toStatus, String reason, Long transitionedBy) {
         this.subscriptionId = subscriptionId;
         this.fromStatus = fromStatus;
         this.toStatus = toStatus;
@@ -63,7 +63,7 @@ public class SubscriptionTransitionLog {
         this.transitionedBy = transitionedBy;
     }
 
-    public SubscriptionTransitionLog(UUID subscriptionId, SubscriptionState fromState, SubscriptionState toState, String reason, UUID transitionedBy) {
+    public SubscriptionTransitionLog(UUID subscriptionId, SubscriptionState fromState, SubscriptionState toState, String reason, Long transitionedBy) {
         this.subscriptionId = subscriptionId;
         this.fromStatus = fromState != null ? fromState.name() : null;
         this.toStatus = toState.name();
@@ -112,11 +112,11 @@ public class SubscriptionTransitionLog {
         this.reason = reason;
     }
 
-    public UUID getTransitionedBy() {
+    public Long getTransitionedBy() {
         return transitionedBy;
     }
 
-    public void setTransitionedBy(UUID transitionedBy) {
+    public void setTransitionedBy(Long transitionedBy) {
         this.transitionedBy = transitionedBy;
     }
 

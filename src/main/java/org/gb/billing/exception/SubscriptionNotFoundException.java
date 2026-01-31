@@ -17,7 +17,7 @@ public class SubscriptionNotFoundException extends RuntimeException {
         this.subscriptionId = subscriptionId;
     }
 
-    public SubscriptionNotFoundException(UUID subscriptionId, UUID tenantId) {
+    public SubscriptionNotFoundException(UUID subscriptionId, Long tenantId) {
         super(String.format("Subscription not found with ID: %s for tenant: %s", subscriptionId, tenantId));
         this.subscriptionId = subscriptionId;
     }

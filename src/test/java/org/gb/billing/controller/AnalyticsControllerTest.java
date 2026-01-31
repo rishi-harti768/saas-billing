@@ -1,8 +1,11 @@
 package org.gb.billing.controller;
 
+import org.gb.billing.config.SecurityConfig;
+import org.gb.billing.config.CorsConfig;
+import org.springframework.context.annotation.Import;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gb.billing.dto.response.*;
-import org.gb.billing.entity.User;
 import org.gb.billing.service.AnalyticsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AnalyticsController.class)
+@Import({SecurityConfig.class, CorsConfig.class})
 @AutoConfigureMockMvc
 class AnalyticsControllerTest {
 
@@ -37,6 +41,15 @@ class AnalyticsControllerTest {
 
     @MockBean
     private org.gb.billing.security.JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private org.gb.billing.service.SubscriptionService subscriptionService;
+
+    @MockBean
+    private io.github.bucket4j.distributed.proxy.ProxyManager<String> proxyManager;
+
+    @MockBean
+    private org.gb.billing.config.RateLimitConfig rateLimitConfig;
 
     @Test
     void shouldGetSubscriptionCountByPlan() throws Exception {
@@ -113,3 +126,4 @@ class AnalyticsControllerTest {
                 user, null, java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_USER"))
         );
     }
+}

@@ -49,8 +49,8 @@ public class AnalyticsService {
     /**
      * Gets count of active subscriptions grouped by plan.
      */
-    @Cacheable(value = "analytics-plans", key = "#tenantId")
-    public List<SubscriptionCountByPlan> getSubscriptionCountByPlan(UUID tenantId) {
+    @Cacheable(value = "analytics", key = "'plans:' + #tenantId")
+    public List<SubscriptionCountByPlan> getSubscriptionCountByPlan(Long tenantId) {
         logger.debug("Generating subscription count by plan report for tenant {}", tenantId);
         
         List<Object[]> results = subscriptionRepository.countActiveSubscriptionsByPlan(tenantId);
@@ -67,17 +67,18 @@ public class AnalyticsService {
     /**
      * Gets count of subscriptions grouped by status.
      */
-    @Cacheable(value = "analytics-status", key = "#tenantId")
-    public List<SubscriptionCountByStatus> getSubscriptionCountByStatus(UUID tenantId) {
+    @Cacheable(value = "analytics", key = "'status:' + #tenantId")
+    public List<SubscriptionCountByStatus> getSubscriptionCountByStatus(Long tenantId) {
         logger.debug("Generating subscription count by status report for tenant {}", tenantId);
         
         List<Object[]> results = subscriptionRepository.countSubscriptionsByStatus(tenantId);
         
         return results.stream()
-                .map(row -> new SubscriptionCountByStatus(
-                        (SubscriptionState) row[0],
-                        ((Number) row[1]).longValue()
-                ))
+                .map(row -> {
+                    SubscriptionState status = (SubscriptionState) row[0];
+                    long count = ((Number) row[1]).longValue();
+                    return new SubscriptionCountByStatus(status, count);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -85,8 +86,8 @@ public class AnalyticsService {
      * Calculates churn rate for the last 30 days.
      * Formula: (Churned Subscriptions / Subscriptions at Start of Period) * 100
      */
-    @Cacheable(value = "analytics-churn", key = "#tenantId")
-    public ChurnRateResponse calculateChurnRate(UUID tenantId) {
+    @Cacheable(value = "analytics", key = "'churn:' + #tenantId")
+    public ChurnRateResponse calculateChurnRate(Long tenantId) {
         logger.debug("Calculating churn rate for tenant {}", tenantId);
         
         Instant now = Instant.now();
@@ -118,8 +119,8 @@ public class AnalyticsService {
     /**
      * Gets subscription growth data (new vs canceled) for the last 30 days.
      */
-    @Cacheable(value = "analytics-growth", key = "#tenantId")
-    public List<SubscriptionGrowthData> getSubscriptionGrowth(UUID tenantId) {
+    @Cacheable(value = "analytics", key = "'growth:' + #tenantId")
+    public List<SubscriptionGrowthData> getSubscriptionGrowth(Long tenantId) {
         logger.debug("Generating subscription growth report for tenant {}", tenantId);
         
         Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
@@ -160,8 +161,8 @@ public class AnalyticsService {
     /**
      * Calculates estimated Monthly Recurring Revenue (MRR) and Annual Recurring Revenue (ARR).
      */
-    @Cacheable(value = "analytics-revenue", key = "#tenantId")
-    public RevenueSummaryResponse getRevenueSummary(UUID tenantId) {
+    @Cacheable(value = "analytics", key = "'revenue:' + #tenantId")
+    public RevenueSummaryResponse getRevenueSummary(Long tenantId) {
         logger.debug("Generating revenue summary for tenant {}", tenantId);
         
         List<Object[]> planCounts = subscriptionRepository.countActiveSubscriptionsByPlan(tenantId);
