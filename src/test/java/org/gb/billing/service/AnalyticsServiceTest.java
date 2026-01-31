@@ -1,35 +1,27 @@
 package org.gb.billing.service;
 
-import org.gb.billing.dto.response.*;
-import org.gb.billing.entity.BillingCycle;
-import org.gb.billing.entity.BillingPlan;
-import org.gb.billing.entity.SubscriptionState;
-import org.gb.billing.repository.PlanRepository;
+import org.gb.billing.dto.ChurnStats;
+import org.gb.billing.dto.MrrStats;
+import org.gb.billing.dto.RevenueStats;
 import org.gb.billing.repository.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class AnalyticsServiceTest {
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
-
-    @Mock
-    private PlanRepository planRepository;
 
     @InjectMocks
     private AnalyticsService analyticsService;
@@ -38,100 +30,58 @@ class AnalyticsServiceTest {
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
         tenantId = 1L;
     }
 
     @Test
-    void shouldGetSubscriptionCountByPlan() {
+    void getMrrStats_shouldCalculateTotalAndReturnBreakdown() {
         // Given
-        UUID planId = UUID.randomUUID();
-        String planName = "Pro";
-        long count = 10L;
-        List<Object[]> queryResult = Collections.singletonList(new Object[]{planId, planName, count});
+        RevenueStats octStats = mock(RevenueStats.class);
+        when(octStats.getPeriod()).thenReturn("2023-10");
+        when(octStats.getAmount()).thenReturn(new BigDecimal("100.00"));
 
-        when(subscriptionRepository.countActiveSubscriptionsByPlan(tenantId)).thenReturn(queryResult);
+        RevenueStats novStats = mock(RevenueStats.class);
+        when(novStats.getPeriod()).thenReturn("2023-11");
+        when(novStats.getAmount()).thenReturn(new BigDecimal("200.00"));
+
+        when(subscriptionRepository.calculateMonthlyRevenue()).thenReturn(Arrays.asList(octStats, novStats));
 
         // When
-        List<SubscriptionCountByPlan> result = analyticsService.getSubscriptionCountByPlan(tenantId);
+        MrrStats result = analyticsService.getMrrStats();
 
         // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getPlanId()).isEqualTo(planId);
-        assertThat(result.get(0).getPlanName()).isEqualTo(planName);
-        assertThat(result.get(0).getActiveCount()).isEqualTo(count);
+        assertNotNull(result);
+        assertEquals(new BigDecimal("300.00"), result.totalMrr());
+        assertEquals(2, result.monthlyBreakdown().size());
+        verify(subscriptionRepository, times(1)).calculateMonthlyRevenue();
     }
 
     @Test
-    void shouldGetSubscriptionCountByStatus() {
+    void getChurnStats_shouldCalculatePercentage() {
         // Given
-        SubscriptionState status = SubscriptionState.ACTIVE;
-        long count = 25L;
-        List<Object[]> queryResult = Collections.singletonList(new Object[]{status, count});
-
-        when(subscriptionRepository.countSubscriptionsByStatus(tenantId)).thenReturn(queryResult);
+        when(subscriptionRepository.countTotalSubscriptions()).thenReturn(100L);
+        when(subscriptionRepository.countCancelledSubscriptions()).thenReturn(10L);
 
         // When
-        List<SubscriptionCountByStatus> result = analyticsService.getSubscriptionCountByStatus(tenantId);
+        ChurnStats result = analyticsService.getChurnStats();
 
         // Then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo(status);
-        assertThat(result.get(0).getCount()).isEqualTo(count);
+        assertNotNull(result);
+        assertEquals(100L, result.totalSubscribers());
+        assertEquals(10L, result.cancelledSubscribers());
+        assertEquals(10.0, result.churnRatePercentage(), 0.01);
     }
 
     @Test
-    void shouldCalculateChurnRate() {
+    void getChurnStats_shouldHandleDivideByZero() {
         // Given
-        long startCount = 100L;
-        long churnedCount = 5L;
-
-        when(subscriptionRepository.countActiveSubscriptionsAtDate(eq(tenantId), any(Instant.class)))
-                .thenReturn(startCount);
-        when(subscriptionRepository.countCanceledSubscriptionsBetween(eq(tenantId), any(Instant.class), any(Instant.class)))
-                .thenReturn(churnedCount);
+        when(subscriptionRepository.countTotalSubscriptions()).thenReturn(0L);
 
         // When
-        ChurnRateResponse result = analyticsService.calculateChurnRate(tenantId);
+        ChurnStats result = analyticsService.getChurnStats();
 
         // Then
-        assertThat(result.getChurnRatePercentage()).isEqualTo(5.0);
-        assertThat(result.getChurnedSubscriptions()).isEqualTo(churnedCount);
-        assertThat(result.getTotalSubscriptionsStartOfPeriod()).isEqualTo(startCount);
-    }
-
-    @Test
-    void shouldCalculateRevenueSummary() {
-        // Given
-        UUID planId1 = UUID.randomUUID();
-        UUID planId2 = UUID.randomUUID();
-
-        BillingPlan plan1 = new BillingPlan("Pro", "Pro Plan", new BigDecimal("100.00"), BillingCycle.MONTHLY);
-        plan1.setId(planId1);
-        
-        BillingPlan plan2 = new BillingPlan("Enterprise", "Ent Plan", new BigDecimal("1200.00"), BillingCycle.YEARLY);
-        plan2.setId(planId2);
-
-        List<BillingPlan> allPlans = Arrays.asList(plan1, plan2);
-        
-        // 5 Pro Plans ($500 MRR)
-        // 2 Enterprise Plans ($200 MRR)
-        List<Object[]> planCounts = Arrays.asList(
-            new Object[]{planId1, "Pro", 5L},
-            new Object[]{planId2, "Enterprise", 2L}
-        );
-
-        when(planRepository.findAll()).thenReturn(allPlans);
-        when(subscriptionRepository.countActiveSubscriptionsByPlan(tenantId)).thenReturn(planCounts);
-
-        // When
-        RevenueSummaryResponse result = analyticsService.getRevenueSummary(tenantId);
-
-        // Then
-        // Total MRR = (100 * 5) + (1200/12 * 2) = 500 + 200 = 700
-        assertThat(result.getMonthlyRecurringRevenue()).isEqualByComparingTo(new BigDecimal("700.00"));
-        // Total ARR = 700 * 12 = 8400
-        assertThat(result.getAnnualRecurringRevenue()).isEqualByComparingTo(new BigDecimal("8400.00"));
-        
-        assertThat(result.getRevenueByPlan()).hasSize(2);
+        assertEquals(0.0, result.churnRatePercentage());
     }
 }
