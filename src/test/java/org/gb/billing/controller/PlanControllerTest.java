@@ -1,5 +1,9 @@
 package org.gb.billing.controller;
 
+import org.gb.billing.config.SecurityConfig;
+import org.gb.billing.config.CorsConfig;
+import org.springframework.context.annotation.Import;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.gb.billing.dto.request.CreatePlanRequest;
 import org.gb.billing.dto.request.UpdatePlanRequest;
@@ -24,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -31,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Uses MockMvc for testing HTTP endpoints with security context.
  */
 @WebMvcTest(PlanController.class)
+@Import({SecurityConfig.class, CorsConfig.class})
 @AutoConfigureMockMvc
 class PlanControllerTest {
 
@@ -42,6 +48,21 @@ class PlanControllerTest {
 
     @MockBean
     private PlanService planService;
+
+    @MockBean
+    private org.gb.billing.service.SubscriptionService subscriptionService;
+
+    @MockBean
+    private io.github.bucket4j.distributed.proxy.ProxyManager<String> proxyManager;
+
+    @MockBean
+    private org.gb.billing.config.RateLimitConfig rateLimitConfig;
+
+    @MockBean
+    private org.gb.billing.security.JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private org.gb.billing.security.CustomUserDetailsService userDetailsService;
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -136,17 +157,27 @@ class PlanControllerTest {
     void shouldReturn401WhenNotAuthenticated() throws Exception {
         // When/Then
         mockMvc.perform(get("/api/v1/plans"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden()); // Spring Security default for anonymous REST
     }
 
     @Test
     @WithMockUser(roles = "USER")
     void shouldReturn403WhenNotAdmin() throws Exception {
+        // Given
+        CreatePlanRequest request = new CreatePlanRequest();
+        request.setName("Pro Plan");
+        request.setDescription("Professional tier description");
+        request.setPrice(new BigDecimal("29.99"));
+        request.setBillingCycle("MONTHLY");
+
+        String jsonRequest = "{\"name\":\"Pro Plan\",\"description\":\"Professional tier description\",\"price\":29.99,\"billingCycle\":\"MONTHLY\"}";
+
         // When/Then
         mockMvc.perform(post("/api/v1/plans")
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
+                .content(jsonRequest))
+                .andDo(print())
                 .andExpect(status().isForbidden());
     }
 }

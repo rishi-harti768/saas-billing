@@ -71,7 +71,7 @@ public class PlanService {
      * 
      * @return list of all active plans
      */
-    @Cacheable(value = "plans", key = "'all'")
+    @Cacheable(value = "plans", key = "'all'", sync = true)
     @Transactional(readOnly = true)
     public List<BillingPlan> getAllPlans() {
         logger.debug("Fetching all billing plans");
@@ -192,7 +192,7 @@ public class PlanService {
      * 
      * @return list of active plans
      */
-    @Cacheable(value = "plans", key = "'active'")
+    @Cacheable(value = "plans", key = "'active'", sync = true)
     @Transactional(readOnly = true)
     public List<BillingPlan> getActivePlans() {
         logger.debug("Fetching active billing plans");

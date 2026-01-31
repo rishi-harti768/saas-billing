@@ -32,10 +32,10 @@ class SubscriptionRepositoryTest {
     private PlanRepository planRepository;
 
     private BillingPlan proPlan;
-    private UUID tenantId1;
-    private UUID tenantId2;
-    private UUID userId1;
-    private UUID userId2;
+    private Long tenantId1;
+    private Long tenantId2;
+    private Long userId1;
+    private Long userId2;
 
     @BeforeEach
     void setUp() {
@@ -47,10 +47,10 @@ class SubscriptionRepositoryTest {
         proPlan = planRepository.save(proPlan);
 
         // Test data
-        tenantId1 = UUID.randomUUID();
-        tenantId2 = UUID.randomUUID();
-        userId1 = UUID.randomUUID();
-        userId2 = UUID.randomUUID();
+        tenantId1 = 1L;
+        tenantId2 = 2L;
+        userId1 = 101L;
+        userId2 = 102L;
     }
 
     @Test
@@ -144,7 +144,7 @@ class SubscriptionRepositoryTest {
         // Given
         Subscription active1 = new Subscription(userId1, tenantId1, proPlan);
         Subscription active2 = new Subscription(userId2, tenantId1, proPlan);
-        Subscription canceled = new Subscription(UUID.randomUUID(), tenantId1, proPlan);
+        Subscription canceled = new Subscription(103L, tenantId1, proPlan);
         canceled.cancel();
 
         subscriptionRepository.saveAll(List.of(active1, active2, canceled));

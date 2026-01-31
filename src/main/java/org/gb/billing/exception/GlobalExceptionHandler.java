@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +23,20 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    /**
+     * Helper method to create ErrorResponse with all required fields.
+     */
+    private ErrorResponse createErrorResponse(HttpStatus status, String error, String errorCode, String message, HttpServletRequest request) {
+        ErrorResponse response = new ErrorResponse();
+        response.setStatus(status.value());
+        response.setError(error);
+        response.setErrorCode(errorCode);
+        response.setMessage(message);
+        response.setPath(request.getRequestURI());
+        response.setTimestamp(java.time.Instant.now().toString());
+        return response;
+    }
+
 
     /**
      * Handle duplicate email registration attempts.
@@ -32,12 +47,7 @@ public class GlobalExceptionHandler {
             DuplicateEmailException ex, HttpServletRequest request) {
         logger.warn("Duplicate email registration attempt: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.CONFLICT, "Conflict", "DUPLICATE_EMAIL", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -51,12 +61,7 @@ public class GlobalExceptionHandler {
             InvalidCredentialsException ex, HttpServletRequest request) {
         logger.warn("Invalid credentials attempt for path: {}", request.getRequestURI());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "INVALID_CREDENTIALS", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
@@ -70,12 +75,7 @@ public class GlobalExceptionHandler {
             ExpiredTokenException ex, HttpServletRequest request) {
         logger.warn("Expired token for path: {}", request.getRequestURI());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.UNAUTHORIZED, "Unauthorized", "TOKEN_EXPIRED", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
@@ -94,22 +94,30 @@ public class GlobalExceptionHandler {
                 .map(error -> new ErrorResponse.FieldError(
                         error.getField(),
                         error.getDefaultMessage(),
-                        error.getRejectedValue()
+                        error.getRejectedValue(),
+                        getExampleForField(error.getField()) // Added example field
                 ))
                 .collect(Collectors.toList());
         
         logger.warn("Validation errors for path {}: {} field(s) failed validation", 
                 request.getRequestURI(), fieldErrors.size());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                "Validation failed for one or more fields",
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "VALIDATION_FAILED", "Validation failed for one or more fields", request);
         error.setErrors(fieldErrors);
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // New helper method for validation examples
+    private String getExampleForField(String field) {
+        return switch (field) {
+            case "email" -> "user@example.com";
+            case "password" -> "StrongP@ssw0rd123";
+            case "role" -> "ROLE_USER, ROLE_ADMIN";
+            case "name" -> "Enterprise Plan";
+            case "price" -> "99.99";
+            default -> null;
+        };
     }
 
     /**
@@ -121,12 +129,7 @@ public class GlobalExceptionHandler {
             PlanNotFoundException ex, HttpServletRequest request) {
         logger.warn("Plan not found: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.NOT_FOUND, "Not Found", "PLAN_NOT_FOUND", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
@@ -140,12 +143,7 @@ public class GlobalExceptionHandler {
             SubscriptionNotFoundException ex, HttpServletRequest request) {
         logger.warn("Subscription not found: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.NOT_FOUND, "Not Found", "SUBSCRIPTION_NOT_FOUND", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
@@ -159,12 +157,7 @@ public class GlobalExceptionHandler {
             InvalidStateTransitionException ex, HttpServletRequest request) {
         logger.warn("Invalid state transition: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "INVALID_STATE_TRANSITION", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -178,12 +171,7 @@ public class GlobalExceptionHandler {
             DuplicateSubscriptionException ex, HttpServletRequest request) {
         logger.warn("Duplicate subscription attempt: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.CONFLICT, "Conflict", "DUPLICATE_SUBSCRIPTION", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -197,12 +185,7 @@ public class GlobalExceptionHandler {
             PlanHasActiveSubscriptionsException ex, HttpServletRequest request) {
         logger.warn("Plan deletion blocked: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.CONFLICT, "Conflict", "PLAN_HAS_ACTIVE_SUBSCRIPTIONS", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -216,12 +199,7 @@ public class GlobalExceptionHandler {
             InvalidUpgradeException ex, HttpServletRequest request) {
         logger.warn("Invalid upgrade attempt: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "INVALID_UPGRADE", ex.getMessage(), request);
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -231,14 +209,39 @@ public class GlobalExceptionHandler {
             org.springframework.dao.OptimisticLockingFailureException ex, HttpServletRequest request) {
         logger.warn("Optimistic locking failure: {}", ex.getMessage());
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                "Resource was modified by another transaction. Please refresh and try again.",
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.CONFLICT, "Conflict", "OPTIMISTIC_LOCK_FAILURE", "Resource was modified by another transaction. Please refresh and try again.", request);
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * Handle rate limit exceeded errors.
+     * Returns HTTP 429 Too Many Requests with Retry-After header.
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(
+            RateLimitExceededException ex, HttpServletRequest request) {
+        logger.warn("Rate limit exceeded for path {}: {}", request.getRequestURI(), ex.getMessage());
+        
+        ErrorResponse error = createErrorResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", "RATE_LIMIT_EXCEEDED", ex.getMessage(), request);
+        
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(error);
+    }
+
+    /**
+     * Handle security access denied exceptions.
+     * Returns HTTP 403 Forbidden.
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
+        logger.warn("Access denied for path {}: {}", request.getRequestURI(), ex.getMessage());
+        
+        ErrorResponse error = createErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", "ACCESS_DENIED", "You do not have permission to access this resource", request);
+        
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
     /**
@@ -248,14 +251,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, HttpServletRequest request) {
-        logger.error("Unexpected error for path {}: {}", request.getRequestURI(), ex.getMessage(), ex);
+        String errorId = UUID.randomUUID().toString(); // Generate unique error ID
+        logger.error("Unexpected error [ID: {}] for path {}: {}", errorId, request.getRequestURI(), ex.getMessage(), ex);
         
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred. Please try again later.",
-                request.getRequestURI()
-        );
+        ErrorResponse error = createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "INTERNAL_SERVER_ERROR", "An unexpected error occurred. Please reference error ID: " + errorId, request);
+        error.setErrorId(errorId); // Set the error ID in the response DTO
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

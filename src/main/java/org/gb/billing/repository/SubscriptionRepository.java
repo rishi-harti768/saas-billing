@@ -32,7 +32,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
      * @param tenantId the tenant ID
      * @return Optional containing the subscription if found
      */
-    Optional<Subscription> findByIdAndTenantId(UUID id, UUID tenantId);
+    Optional<Subscription> findByIdAndTenantId(UUID id, Long tenantId);
 
     /**
      * Checks if a subscription exists by ID and tenant ID.
@@ -41,7 +41,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
      * @param tenantId the tenant ID
      * @return true if exists, false otherwise
      */
-    boolean existsByIdAndTenantId(UUID id, UUID tenantId);
+    boolean existsByIdAndTenantId(UUID id, Long tenantId);
 
     /**
      * Finds the active or past-due subscription for a user.
@@ -54,8 +54,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT s FROM Subscription s WHERE s.userId = :userId AND s.tenantId = :tenantId " +
            "AND s.status IN ('ACTIVE', 'PAST_DUE')")
     Optional<Subscription> findActiveOrPastDueByUserIdAndTenantId(
-        @Param("userId") UUID userId,
-        @Param("tenantId") UUID tenantId
+        @Param("userId") Long userId,
+        @Param("tenantId") Long tenantId
     );
 
     /**
@@ -65,7 +65,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
      * @param tenantId the tenant ID
      * @return list of user's subscriptions
      */
-    List<Subscription> findByUserIdAndTenantId(UUID userId, UUID tenantId);
+    List<Subscription> findByUserIdAndTenantId(Long userId, Long tenantId);
 
     /**
      * Counts active subscriptions for a specific plan.
@@ -85,7 +85,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
      * @param tenantId the tenant ID
      * @return list of subscriptions with the given status
      */
-    List<Subscription> findByStatusAndTenantId(SubscriptionState status, UUID tenantId);
+    List<Subscription> findByStatusAndTenantId(SubscriptionState status, Long tenantId);
 
     /**
      * Finds subscriptions with next billing date before a given date.
@@ -105,7 +105,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
      * @return list of [status, count] tuples
      */
     @Query("SELECT s.status, COUNT(s) FROM Subscription s WHERE s.tenantId = :tenantId GROUP BY s.status")
-    List<Object[]> countSubscriptionsByStatus(@Param("tenantId") UUID tenantId);
+    List<Object[]> countSubscriptionsByStatus(@Param("tenantId") Long tenantId);
 
     /**
      * Counts active subscriptions by plan for analytics.
@@ -116,7 +116,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT s.plan.id, s.plan.name, COUNT(s) FROM Subscription s " +
            "WHERE s.tenantId = :tenantId AND s.status IN ('ACTIVE', 'PAST_DUE') " +
            "GROUP BY s.plan.id, s.plan.name")
-    List<Object[]> countActiveSubscriptionsByPlan(@Param("tenantId") UUID tenantId);
+    List<Object[]> countActiveSubscriptionsByPlan(@Param("tenantId") Long tenantId);
 
     /**
      * Counts total active/past-due subscriptions active at a specific date.
@@ -126,7 +126,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
            "WHERE s.tenantId = :tenantId " +
            "AND s.startDate <= :date " +
            "AND (s.canceledAt IS NULL OR s.canceledAt > :date)")
-    long countActiveSubscriptionsAtDate(@Param("tenantId") UUID tenantId, @Param("date") Instant date);
+    long countActiveSubscriptionsAtDate(@Param("tenantId") Long tenantId, @Param("date") Instant date);
 
     /**
      * Counts subscriptions canceled between two dates.
@@ -135,7 +135,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT COUNT(s) FROM Subscription s " +
            "WHERE s.tenantId = :tenantId " +
            "AND s.canceledAt >= :startDate AND s.canceledAt <= :endDate")
-    long countCanceledSubscriptionsBetween(@Param("tenantId") UUID tenantId, 
+    long countCanceledSubscriptionsBetween(@Param("tenantId") Long tenantId, 
                                           @Param("startDate") Instant startDate, 
                                           @Param("endDate") Instant endDate);
 
@@ -146,7 +146,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
            "FROM subscription " +
            "WHERE tenant_id = :tenantId AND created_at >= :startDate " +
            "GROUP BY CAST(created_at AS DATE)", nativeQuery = true)
-    List<Object[]> countNewSubscriptionsByDate(@Param("tenantId") UUID tenantId, @Param("startDate") Instant startDate);
+    List<Object[]> countNewSubscriptionsByDate(@Param("tenantId") Long tenantId, @Param("startDate") Instant startDate);
     
     /**
      * Gets canceled subscriptions count grouped by date.
@@ -155,6 +155,6 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
            "FROM subscription " +
            "WHERE tenant_id = :tenantId AND canceled_at >= :startDate " +
            "GROUP BY CAST(canceled_at AS DATE)", nativeQuery = true)
-    List<Object[]> countCanceledSubscriptionsByDate(@Param("tenantId") UUID tenantId, @Param("startDate") Instant startDate);
+    List<Object[]> countCanceledSubscriptionsByDate(@Param("tenantId") Long tenantId, @Param("startDate") Instant startDate);
 
 }

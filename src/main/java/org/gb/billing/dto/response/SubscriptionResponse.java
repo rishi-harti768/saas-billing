@@ -14,7 +14,7 @@ import java.util.UUID;
 public class SubscriptionResponse {
 
     private UUID id;
-    private UUID userId;
+    private Long userId;
     private SubscriptionState status;
     private PlanSummary plan;
     private Instant startDate;
@@ -67,11 +67,11 @@ public class SubscriptionResponse {
         this.id = id;
     }
 
-    public UUID getUserId() {
+    public Long getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(Long userId) {
         this.userId = userId;
     }
 

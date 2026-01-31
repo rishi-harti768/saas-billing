@@ -9,6 +9,8 @@ import org.gb.billing.repository.PlanRepository;
 import org.gb.billing.repository.SubscriptionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -71,7 +73,8 @@ public class SubscriptionService {
      * @throws PlanNotFoundException if plan not found
      * @throws DuplicateSubscriptionException if user already has active subscription
      */
-    public Subscription createSubscription(UUID userId, UUID tenantId, UUID planId) {
+    @CacheEvict(value = "user-subscriptions", key = "#userId + ':' + #tenantId")
+    public Subscription createSubscription(Long userId, Long tenantId, UUID planId) {
         logger.info("Creating subscription for user {} to plan {}", userId, planId);
 
         // Validate plan exists
@@ -110,7 +113,7 @@ public class SubscriptionService {
      * @throws SubscriptionNotFoundException if subscription not found or belongs to different tenant
      */
     @Transactional(readOnly = true)
-    public Subscription getSubscriptionById(UUID subscriptionId, UUID tenantId) {
+    public Subscription getSubscriptionById(UUID subscriptionId, Long tenantId) {
         logger.debug("Fetching subscription {} for tenant {}", subscriptionId, tenantId);
 
         return subscriptionRepository.findByIdAndTenantId(subscriptionId, tenantId)
@@ -124,8 +127,9 @@ public class SubscriptionService {
      * @param tenantId the tenant ID
      * @return Optional containing the subscription if exists
      */
+    @Cacheable(value = "user-subscriptions", key = "#userId + ':' + #tenantId", sync = true)
     @Transactional(readOnly = true)
-    public Optional<Subscription> getMySubscription(UUID userId, UUID tenantId) {
+    public Optional<Subscription> getMySubscription(Long userId, Long tenantId) {
         logger.debug("Fetching active subscription for user {} in tenant {}", userId, tenantId);
 
         return subscriptionRepository.findActiveOrPastDueByUserIdAndTenantId(userId, tenantId);
@@ -139,7 +143,7 @@ public class SubscriptionService {
      * @return list of user's subscriptions
      */
     @Transactional(readOnly = true)
-    public List<Subscription> getUserSubscriptions(UUID userId, UUID tenantId) {
+    public List<Subscription> getUserSubscriptions(Long userId, Long tenantId) {
         logger.debug("Fetching all subscriptions for user {} in tenant {}", userId, tenantId);
 
         return subscriptionRepository.findByUserIdAndTenantId(userId, tenantId);
@@ -153,7 +157,7 @@ public class SubscriptionService {
      * @return list of subscriptions with the given status
      */
     @Transactional(readOnly = true)
-    public List<Subscription> getSubscriptionsByStatus(UUID tenantId, org.gb.billing.entity.SubscriptionState status) {
+    public List<Subscription> getSubscriptionsByStatus(Long tenantId, org.gb.billing.entity.SubscriptionState status) {
         logger.debug("Fetching subscriptions with status {} for tenant {}", status, tenantId);
 
         return subscriptionRepository.findByStatusAndTenantId(status, tenantId);
@@ -178,7 +182,8 @@ public class SubscriptionService {
      * @throws PlanNotFoundException if new plan not found
      * @throws org.gb.billing.exception.InvalidUpgradeException if upgrade is not allowed
      */
-    public Subscription upgradeSubscription(UUID subscriptionId, UUID tenantId, UUID newPlanId) {
+    @CacheEvict(value = "user-subscriptions", allEntries = true) // Safer to evict all if we don't have user/tenant easily accessible, or compute it
+    public Subscription upgradeSubscription(UUID subscriptionId, Long tenantId, UUID newPlanId) {
         logger.info("Upgrading subscription {} to plan {}", subscriptionId, newPlanId);
 
         // Fetch subscription with tenant filtering
@@ -239,7 +244,8 @@ public class SubscriptionService {
      * @throws SubscriptionNotFoundException if subscription not found
      * @throws org.gb.billing.exception.InvalidStateTransitionException if already canceled
      */
-    public void cancelSubscription(UUID subscriptionId, UUID tenantId, UUID userId) {
+    @CacheEvict(value = "user-subscriptions", allEntries = true)
+    public void cancelSubscription(UUID subscriptionId, Long tenantId, Long userId) {
         logger.info("Canceling subscription {} for user {}", subscriptionId, userId);
 
         // Fetch subscription with tenant filtering
@@ -256,22 +262,22 @@ public class SubscriptionService {
         }
 
         // Perform cancellation
+        // Apply side effects
         org.gb.billing.entity.SubscriptionState oldStatus = subscription.getStatus();
         subscription.cancel();
-
-        // Save with optimistic locking
-        Subscription saved = subscriptionRepository.save(subscription);
-
-        // Log the state transition
+        
+        // State Machine handles status update, validation, and transition logging
         stateMachine.transitionTo(
-            saved,
+            subscription,
             org.gb.billing.entity.SubscriptionState.CANCELED,
             "User canceled subscription",
             userId
         );
+        
+        subscriptionRepository.save(subscription);
 
         logger.info("Successfully canceled subscription {} (previous status: {})", 
-                   saved.getId(), oldStatus);
+                   subscription.getId(), oldStatus);
                    
         meterRegistry.counter("subscription.canceled").increment();
     }
@@ -296,9 +302,12 @@ public class SubscriptionService {
              return; 
         }
 
+        // Apply side effects
         subscription.transitionToPastDue();
-        Subscription saved = subscriptionRepository.save(subscription);
-        stateMachine.transitionTo(saved, org.gb.billing.entity.SubscriptionState.PAST_DUE, reason, null);
+
+        // State Machine handles status update, validation, and transition logging
+        stateMachine.transitionTo(subscription, org.gb.billing.entity.SubscriptionState.PAST_DUE, reason, null);
+        subscriptionRepository.save(subscription);
     }
 
     /**
@@ -318,9 +327,12 @@ public class SubscriptionService {
              return; 
         }
 
+        // Apply side effects
         subscription.transitionToActive();
-        Subscription saved = subscriptionRepository.save(subscription);
-        stateMachine.transitionTo(saved, org.gb.billing.entity.SubscriptionState.ACTIVE, reason, null);
+
+        // State Machine handles status update, validation and transition logging
+        stateMachine.transitionTo(subscription, org.gb.billing.entity.SubscriptionState.ACTIVE, reason, null);
+        subscriptionRepository.save(subscription);
     }
 
     /**
@@ -339,9 +351,9 @@ public class SubscriptionService {
              return;
         }
 
-        subscription.cancel();
-        Subscription saved = subscriptionRepository.save(subscription);
-        stateMachine.transitionTo(saved, org.gb.billing.entity.SubscriptionState.CANCELED, reason, null);
+        // State Machine handles status update and logging
+        stateMachine.transitionTo(subscription, org.gb.billing.entity.SubscriptionState.CANCELED, reason, null);
+        subscriptionRepository.save(subscription);
     }
 
     /**
@@ -352,7 +364,7 @@ public class SubscriptionService {
      * @return list of transition logs
      */
     @Transactional(readOnly = true)
-    public List<org.gb.billing.entity.SubscriptionTransitionLog> getTransitionHistory(UUID subscriptionId, UUID tenantId) {
+    public List<org.gb.billing.entity.SubscriptionTransitionLog> getTransitionHistory(UUID subscriptionId, Long tenantId) {
         // Validation check for tenant access
         if (!subscriptionRepository.existsByIdAndTenantId(subscriptionId, tenantId)) {
             throw new SubscriptionNotFoundException(subscriptionId, tenantId);

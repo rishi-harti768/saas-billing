@@ -34,11 +34,11 @@ class AnalyticsServiceTest {
     @InjectMocks
     private AnalyticsService analyticsService;
 
-    private UUID tenantId;
+    private Long tenantId;
 
     @BeforeEach
     void setUp() {
-        tenantId = UUID.randomUUID();
+        tenantId = 1L;
     }
 
     @Test

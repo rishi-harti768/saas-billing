@@ -80,10 +80,8 @@ public class SubscriptionController {
         
         logger.info("User {} subscribing to plan {}", user.getId(), request.getPlanId());
 
-        // Convert User.id (Long) to UUID for subscription
-        UUID userId = UUID.nameUUIDFromBytes(user.getId().toString().getBytes());
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long userId = user.getId();
+        Long tenantId = user.getTenantId();
 
         Subscription subscription = subscriptionService.createSubscription(userId, tenantId, request.getPlanId());
         SubscriptionResponse response = SubscriptionResponse.fromEntity(subscription);
@@ -111,9 +109,8 @@ public class SubscriptionController {
         
         logger.debug("Fetching subscription for user {}", user.getId());
 
-        UUID userId = UUID.nameUUIDFromBytes(user.getId().toString().getBytes());
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long userId = user.getId();
+        Long tenantId = user.getTenantId();
 
         Optional<Subscription> subscription = subscriptionService.getMySubscription(userId, tenantId);
 
@@ -148,8 +145,7 @@ public class SubscriptionController {
         
         logger.debug("Fetching subscription {} for user {}", id, user.getId());
 
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long tenantId = user.getTenantId();
 
         Subscription subscription = subscriptionService.getSubscriptionById(id, tenantId);
         SubscriptionResponse response = SubscriptionResponse.fromEntity(subscription);
@@ -185,8 +181,7 @@ public class SubscriptionController {
         
         logger.info("User {} upgrading subscription {} to plan {}", user.getId(), id, request.getNewPlanId());
 
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long tenantId = user.getTenantId();
 
         Subscription subscription = subscriptionService.upgradeSubscription(id, tenantId, request.getNewPlanId());
         SubscriptionResponse response = SubscriptionResponse.fromEntity(subscription);
@@ -220,9 +215,8 @@ public class SubscriptionController {
         
         logger.info("User {} canceling subscription {}", user.getId(), id);
 
-        UUID userId = UUID.nameUUIDFromBytes(user.getId().toString().getBytes());
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long userId = user.getId();
+        Long tenantId = user.getTenantId();
 
         subscriptionService.cancelSubscription(id, tenantId, userId);
 
@@ -252,8 +246,7 @@ public class SubscriptionController {
         
         logger.debug("Fetching transition history for subscription {} and user {}", id, user.getId());
 
-        UUID tenantId = user.getTenantId() != null ? 
-            UUID.nameUUIDFromBytes(user.getTenantId().toString().getBytes()) : null;
+        Long tenantId = user.getTenantId();
 
         java.util.List<org.gb.billing.entity.SubscriptionTransitionLog> history = 
             subscriptionService.getTransitionHistory(id, tenantId);
