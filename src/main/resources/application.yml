@@ -29,6 +29,14 @@ spring:
     locations: classpath:db/migration
     validate-on-migrate: true
   
+  # Multipart file upload configuration
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 20MB
+      file-size-threshold: 2KB
+  
   # Caffeine Cache Configuration
   cache:
     type: caffeine
@@ -73,6 +81,13 @@ spring.mail:
 invoice:
   storage:
     path: ${INVOICE_PATH:./invoices}
+
+# File Upload Configuration (Mandatory PRD Feature)
+file:
+  upload:
+    dir: ${FILE_UPLOAD_DIR:./uploads}
+    max-file-size: 5MB
+    max-request-size: 20MB
 
 # Logging Configuration
 logging:

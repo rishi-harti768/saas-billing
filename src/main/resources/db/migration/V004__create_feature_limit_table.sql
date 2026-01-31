@@ -8,6 +8,8 @@ CREATE TABLE feature_limit (
     limit_value INTEGER NOT NULL CHECK (limit_value >= -1),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    last_modified_by VARCHAR(100),
     
     -- Foreign key to billing_plan
     CONSTRAINT fk_feature_limit_plan FOREIGN KEY (plan_id) 

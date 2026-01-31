@@ -7,8 +7,11 @@ CREATE TABLE subscription_transition_log (
     from_status VARCHAR(20),
     to_status VARCHAR(20) NOT NULL,
     reason VARCHAR(255),
-    transitioned_by UUID,
+    transitioned_by BIGINT,
     transitioned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_modified_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    last_modified_by VARCHAR(100),
     
     -- Foreign key to subscription
     CONSTRAINT fk_transition_log_subscription FOREIGN KEY (subscription_id) 

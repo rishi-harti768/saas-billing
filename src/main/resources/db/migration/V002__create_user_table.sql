@@ -12,6 +12,8 @@ CREATE TABLE users (
     last_modified_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login_date TIMESTAMP,
     version BIGINT NOT NULL DEFAULT 0,
+    created_by VARCHAR(100),
+    last_modified_by VARCHAR(100),
     CONSTRAINT chk_user_tenant CHECK (
         (role = 'ROLE_ADMIN' AND tenant_id IS NULL) OR
         (role = 'ROLE_USER' AND tenant_id IS NOT NULL)

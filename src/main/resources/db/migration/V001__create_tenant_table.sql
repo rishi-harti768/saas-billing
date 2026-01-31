@@ -4,7 +4,9 @@ CREATE TABLE tenants (
     name VARCHAR(255) NOT NULL UNIQUE,
     active BOOLEAN NOT NULL DEFAULT true,
     created_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    last_modified_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(100),
+    last_modified_by VARCHAR(100)
 );
 
 -- Create indexes for performance

@@ -41,3 +41,5 @@ application-local.properties
 *.key
 *.pem
 secrets/
+
+uploads/

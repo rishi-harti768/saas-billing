@@ -11,7 +11,10 @@ CREATE TABLE payment (
     external_payment_id VARCHAR(255),
     invoice_url VARCHAR(500),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_modified_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     paid_at TIMESTAMP,
+    created_by VARCHAR(100),
+    last_modified_by VARCHAR(100),
     
     CONSTRAINT fk_payment_subscription FOREIGN KEY (subscription_id) REFERENCES subscription(id) ON DELETE CASCADE
 );

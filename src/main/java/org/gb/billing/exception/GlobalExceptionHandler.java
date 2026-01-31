@@ -259,6 +259,20 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle file storage errors (file upload failures).
+     * Returns HTTP 400 Bad Request.
+     */
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorageException(
+            FileStorageException ex, HttpServletRequest request) {
+        logger.warn("File storage error: {}", ex.getMessage());
+        
+        ErrorResponse error = createErrorResponse(HttpStatus.BAD_REQUEST, "Bad Request", "FILE_STORAGE_ERROR", ex.getMessage(), request);
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * Handle security access denied exceptions.
      * Returns HTTP 403 Forbidden.
      */
