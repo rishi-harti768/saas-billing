@@ -355,10 +355,6 @@ ACTIVE ──> PAST_DUE ──> CANCELED
 
 ---
 
-## 📝 License
-
-This project is proprietary and confidential.
-
 ---
 
 ## 👥 Contributors
